@@ -1,0 +1,14 @@
+{
+    "name": "com.unity.cli-config-manager.editorTests",
+    "references": [
+        "com.unity.cli-config-manager.editor",
+        "com.unity.cli-config-manager"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
