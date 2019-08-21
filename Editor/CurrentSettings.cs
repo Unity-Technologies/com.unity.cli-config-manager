@@ -1,4 +1,6 @@
-﻿using Unity.XR.Oculus;
+﻿#if OCULUS_SDK
+using Unity.XR.Oculus;
+#endif
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.XR;

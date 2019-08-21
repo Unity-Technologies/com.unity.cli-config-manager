@@ -3,8 +3,5 @@
 	"displayName":"Unity CLI Configuration Manager",
 	"version": "0.1.0-preview",
 	"unity": "2019.3",
-	"description": "Provides a command line parser and options to set build, player, and other Unity settings when running Unity from the command line.",
-	"dependencies": {
-		"com.unity.xr.management": "3.0.1"
-	}
+	"description": "Provides a command line parser and options to set build, player, and other Unity settings when running Unity from the command line."
 }

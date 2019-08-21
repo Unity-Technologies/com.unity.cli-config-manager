@@ -1,9 +1,11 @@
-﻿#if UNITY_EDITOR && XR_SDK
+﻿#if UNITY_EDITOR
 using System;
 using UnityEditor;
 using UnityEngine;
+#if XR_SDK
 using UnityEditor.XR.Management;
 using UnityEngine.XR.Management;
+#endif
 
 #if OCULUS_SDK
 using Unity.XR.Oculus;
@@ -17,6 +19,7 @@ namespace com.unity.cliconfigmanager
 
         public static void SetupXrSdk()
         {
+#if XR_SDK
             // Create our own test version of xr general settings.
             var xrGeneralSettings = ScriptableObject.CreateInstance<XRGeneralSettings>();
             var managerSettings = ScriptableObject.CreateInstance<XRManagerSettings>();
@@ -30,14 +33,14 @@ namespace com.unity.cliconfigmanager
 
             if (settings == null)
             {
-                throw new ArgumentNullException($"{typeof(OculusSettings).Name} is null, but shouldn't be.");
+                throw new ArgumentNullException($"Tried to instantiate an instance of {typeof(OculusSettings).Name} but it is null.");
             }
 
             var loader = ScriptableObject.CreateInstance<OculusLoader>();
 
             if (loader == null)
             {
-                throw new ArgumentNullException($"{typeof(OculusLoader).Name} is null, but shouldn't be.");
+                throw new ArgumentNullException($"Tried to instantiate an instance of {typeof(OculusLoader).Name}, but it is null.");
             }
 
             xrGeneralSettings.Manager.loaders.Add(loader);
@@ -63,6 +66,7 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.SaveAssets();
             EditorBuildSettings.AddConfigObject(xrSdkSettingsName, settings, true);
             EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, buildTargetSettings, true);
+#endif
 #endif
         }
     }

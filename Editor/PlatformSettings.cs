@@ -1,5 +1,7 @@
 ﻿#if UNITY_EDITOR
+#if OCULUS_SDK
 using Unity.XR.Oculus;
+#endif
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;

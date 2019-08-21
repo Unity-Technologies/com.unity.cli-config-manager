@@ -1,12 +1,12 @@
 ﻿#if UNITY_EDITOR
 using NDesk.Options;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using System.Text.RegularExpressions;
-using Unity.XR.Oculus;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -20,16 +20,25 @@ namespace com.unity.cliconfigmanager
         }
 
         public readonly string ConfigManagerSettingsPath = "Assets/XR/Settings/ConfigManagerSettings.asset";
-
+        private readonly OculusSettingsConfigurator oculusSettingsConfigurator = new OculusSettingsConfigurator();
         private readonly Regex customArgRegex = new Regex("-([^=]*)=", RegexOptions.Compiled);
         private bool useCliConfigManager = true;
         private ConfigManagerSettings configManagerSettings;
+        private string packageId;
+        private static readonly string XrSdkDefine = "XR_SDK";
+        private static readonly string OculusSdkDefine = "OCULUS_SDK";
+
+        private static readonly List<string> XrSdkDefines = new List<string>
+        {
+            "XR_SDK",
+            "OCULUS_SDK"
+        };
 
         public void OnPreprocessBuild(BuildReport report)
         {
+            SetScriptingDefinesAndUpdatePackages();
             ParseCommandLineArgs();
             SetConfigManagerSettings();
-            EnsureScriptingDefineSymbolsConfiguration();
 
             if (configManagerSettings.EnableConfigManager)
             {
@@ -38,24 +47,41 @@ namespace com.unity.cliconfigmanager
             }
         }
 
-        private static void EnsureScriptingDefineSymbolsConfiguration()
+        private static void SetScriptingDefinesAndUpdatePackages()
         {
-            if (IsXrSdk())
+            var args = Environment.GetCommandLineArgs();
+            var defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
+                .Split(';').ToList();
+
+
+            var xrSdkPackageHandler = new XrSdkPackageHandler();
+            xrSdkPackageHandler.RemoveXrPackages();
+            WaitForDomainReload();
+
+            if (IsOculusXrSdk())
             {
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(
-                    EditorUserBuildSettings.selectedBuildTargetGroup,
-                    string.Format(
-                        "XR_SDK{0}",
-                        PlatformSettings.XrTarget.ToLower().Equals("oculusxrsdk") ? ";OCULUS_SDK" : ""));
+                // Need to turn off legacy xr support if using xr sdk. 
+                PlayerSettings.virtualRealitySupported = false;
+
+                // TODO refactor so we can pass this in?
+                var oculusPackage = "file:../com.unity.xr.oculus";
+                xrSdkPackageHandler.AddPackage("com.unity.xr.management");
+                xrSdkPackageHandler.AddPackage(oculusPackage);
+
+                defines.Add(XrSdkDefine);
+                defines.Add(OculusSdkDefine);
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+                    string.Join(";", defines.ToArray()));
             }
             else
             {
-                var defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
-                    .Split(';');
                 // Remove XR SDK defines if we know we're using legacy
-                var cleanedDefines = defines.Where(d => !d.Equals("XR_SDK") && !d.Equals("OCULUS_SDK"));
+                PlayerSettings.virtualRealitySupported = true;
+                var cleanedDefines = defines.ToList().Except(XrSdkDefines).ToList();
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
                     string.Join(";", cleanedDefines.ToArray()));
+                WaitForDomainReload();
             }
         }
 
@@ -94,8 +120,6 @@ namespace com.unity.cliconfigmanager
             // This handles the case where the command line option passed in is different than the current value of settings.EnableConfigManager. In this
             // case we assume you're running from command line and want to override with this passed in value.
             configManagerSettings.EnableConfigManager = useCliConfigManager || configManagerSettings.EnableConfigManager;
-
-            return configManagerSettings;
         }
 
         private void EnsureOptionsLowerCased(string[] args)
@@ -127,35 +151,25 @@ namespace com.unity.cliconfigmanager
             }
         }
 
-        private static void ConfigureXr()
+
+        private void ConfigureXr()
         {
-            if (IsXrSdk())
+
+            if (IsOculusXrSdk())
             {
-                SetupXrSdk();
+                oculusSettingsConfigurator.ConfigureXr();
             }
             else
             {
-                SetupLegacyXr();
+                PlayerSettings.virtualRealitySupported = true;
+                UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(PlatformSettings.BuildTargetGroup, new string[] { PlatformSettings.XrTarget });
+                PlayerSettings.stereoRenderingPath = PlatformSettings.StereoRenderingPath;
             }
         }
 
-        private static void SetupXrSdk()
+        private bool IsXrSdk()
         {
-            // Need to turn off legacy xr support if using xr sdk. 
-            PlayerSettings.virtualRealitySupported = false;
-            XrSdkConfigurator.SetupXrSdk();
-        }
-
-        private static void SetupLegacyXr()
-        {
-            PlayerSettings.virtualRealitySupported = true;
-            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(PlatformSettings.BuildTargetGroup, new string[] {PlatformSettings.XrTarget});
-            PlayerSettings.stereoRenderingPath = PlatformSettings.StereoRenderingPath;
-        }
-
-        private static bool IsXrSdk()
-        {
-            return PlatformSettings.XrTarget.Contains("XRSDK");
+            return PlatformSettings.XrTarget.ToLower().Contains("xrsdk");
         }
 
         private void ConfigureAndroidSettings()
@@ -173,7 +187,7 @@ namespace com.unity.cliconfigmanager
                 .Add("enabledxrtarget=",
                     "XR target to enable in player settings. Values: " +
                     "\r\n\"Oculus\"\r\n\"OpenVR\"\r\n\"cardboard\"\r\n\"daydream\"\r\n\"MockHMD\"\r\n\"OculusXRSDK\"\r\n\"MagicLeapXRSDK\"\r\n\"WindowsMRXRSDK\"",
-                    xrTarget => { PlatformSettings.XrTarget = xrTarget; })
+                    Action)
                 .Add("playergraphicsapi=", "Graphics API based on GraphicsDeviceType.",
                     graphicsDeviceType => PlatformSettings.PlayerGraphicsApi = TryParse<GraphicsDeviceType>(graphicsDeviceType))
                 .Add("colorspace=", "Linear or Gamma color space.",
@@ -194,22 +208,16 @@ namespace com.unity.cliconfigmanager
                     option => useCliConfigManager = option != null);
         }
 
+        private void Action(string xrTarget)
+        {
+            PlatformSettings.XrTarget = xrTarget;
+        }
+
         private void TrySetStereoRenderingPath(string stereoRenderingPath)
         {
-            if (IsXrSdk())
+            if (IsOculusXrSdk())
             {
-#if OCULUS_SDK
-                // This allows us to be "backward compatible".
-                var srp = stereoRenderingPath.Equals("SinglePass") ? "SinglePassInstanced" : stereoRenderingPath;
-                if (PlatformSettings.BuildTarget == BuildTarget.Android)
-                {
-                    PlatformSettings.StereoRenderingModeAndroid = TryParse<OculusSettings.StereoRenderingMode>(srp);
-                }
-                else
-                {
-                    PlatformSettings.StereoRenderingModeDesktop = TryParse<OculusSettings.StereoRenderingMode>(srp);
-                }
-#endif
+                oculusSettingsConfigurator.TrySetOculusXrSdkStereoRenderingPath(stereoRenderingPath);
             }
 
             if (!IsXrSdk())
@@ -218,7 +226,7 @@ namespace com.unity.cliconfigmanager
             }
         }
 
-        private static T TryParse<T>(string stringToParse)
+        public static T TryParse<T>(string stringToParse)
         {
             T thisType;
             try
@@ -231,6 +239,19 @@ namespace com.unity.cliconfigmanager
             }
 
             return thisType;
+        }
+
+        private static bool IsOculusXrSdk()
+        {
+            var args = Environment.GetCommandLineArgs();
+            return args.Any(a => a.ToLower().Contains("oculusxrsdk"));
+        }
+
+        private static void WaitForDomainReload()
+        {
+            while (EditorApplication.isCompiling)
+            {
+            }
         }
     }
 }
