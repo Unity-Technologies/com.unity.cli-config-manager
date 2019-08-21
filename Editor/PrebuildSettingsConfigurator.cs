@@ -50,9 +50,17 @@ namespace com.unity.cliconfigmanager
         private static void SetScriptingDefinesAndUpdatePackages()
         {
             var args = Environment.GetCommandLineArgs();
-            var defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
-                .Split(';').ToList();
-
+            var defines = PlayerSettings
+                .GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
+                .Split(';')
+                .ToList();
+            var cleanedDefines = defines.ToList().Except(XrSdkDefines).ToList();
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+                string.Empty);
+            WaitForDomainReload();
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+                string.Join(";", cleanedDefines.ToArray()));
+            WaitForDomainReload();
 
             var xrSdkPackageHandler = new XrSdkPackageHandler();
             xrSdkPackageHandler.RemoveXrPackages();
@@ -78,10 +86,6 @@ namespace com.unity.cliconfigmanager
             {
                 // Remove XR SDK defines if we know we're using legacy
                 PlayerSettings.virtualRealitySupported = true;
-                var cleanedDefines = defines.ToList().Except(XrSdkDefines).ToList();
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
-                    string.Join(";", cleanedDefines.ToArray()));
-                WaitForDomainReload();
             }
         }
 
@@ -169,7 +173,8 @@ namespace com.unity.cliconfigmanager
 
         private bool IsXrSdk()
         {
-            return PlatformSettings.XrTarget.ToLower().Contains("xrsdk");
+            var args = Environment.GetCommandLineArgs();
+            return args.Any(a => a.ToLower().Contains("xrsdk"));
         }
 
         private void ConfigureAndroidSettings()
@@ -184,7 +189,7 @@ namespace com.unity.cliconfigmanager
                 .Add("simulationmode=",
                     "Enable Simulation modes for Windows MR in Editor. Values: \r\n\"HoloLens\"\r\n\"WindowsMR\"\r\n\"Remoting\"",
                     simMode => PlatformSettings.SimulationMode = simMode)
-                .Add("enabledxrtarget=",
+                .Add("enabledxrtarget|enabledxrtargets=",
                     "XR target to enable in player settings. Values: " +
                     "\r\n\"Oculus\"\r\n\"OpenVR\"\r\n\"cardboard\"\r\n\"daydream\"\r\n\"MockHMD\"\r\n\"OculusXRSDK\"\r\n\"MagicLeapXRSDK\"\r\n\"WindowsMRXRSDK\"",
                     Action)
