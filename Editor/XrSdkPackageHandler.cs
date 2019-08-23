@@ -1,9 +1,10 @@
-﻿#if UNITY_EDITOR
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.PackageManager;
+#endif
 
 namespace com.unity.cliconfigmanager
 {
@@ -15,7 +16,7 @@ namespace com.unity.cliconfigmanager
             "com.unity.xr.oculus",
             "com.unity.xr.windowsmr"
         };
-
+#if UNITY_EDITOR
         public void RemoveXrPackages()
         {
             var listRequest = Client.List(true);
@@ -41,7 +42,6 @@ namespace com.unity.cliconfigmanager
                             "Error removing package {0}:\r\n{1}", packageId, removePackageCallback.Error.message));
                     }
                 }
-
             }
         }
 
@@ -84,6 +84,8 @@ namespace com.unity.cliconfigmanager
                 {
                 }
 
+                WaitForDomainReload();
+
                 if (addPackageCallback.Error != null)
                 {
                     throw new Exception(string.Format(
@@ -93,6 +95,13 @@ namespace com.unity.cliconfigmanager
                 }
             }
         }
+
+        private static void WaitForDomainReload()
+        {
+            while (EditorApplication.isCompiling)
+            {
+            }
+        }
+#endif
     }
 }
-#endif

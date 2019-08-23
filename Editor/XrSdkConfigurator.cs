@@ -1,12 +1,14 @@
-﻿#if UNITY_EDITOR
-using System;
-using UnityEditor;
-using UnityEngine;
+﻿using System;
+#if UNITY_EDITOR
 #if XR_SDK
 using UnityEditor.XR.Management;
+#endif
+using UnityEditor;
+#endif
+using UnityEngine;
+#if XR_SDK
 using UnityEngine.XR.Management;
 #endif
-
 #if OCULUS_SDK
 using Unity.XR.Oculus;
 #endif
@@ -19,7 +21,7 @@ namespace com.unity.cliconfigmanager
 
         public static void SetupXrSdk()
         {
-#if XR_SDK
+#if UNITY_EDITOR && XR_SDK
             // Create our own test version of xr general settings.
             var xrGeneralSettings = ScriptableObject.CreateInstance<XRGeneralSettings>();
             var managerSettings = ScriptableObject.CreateInstance<XRManagerSettings>();
@@ -71,4 +73,3 @@ namespace com.unity.cliconfigmanager
         }
     }
 }
-#endif

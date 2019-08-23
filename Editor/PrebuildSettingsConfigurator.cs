@@ -1,29 +1,20 @@
-﻿#if UNITY_EDITOR
-using NDesk.Options;
+﻿using NDesk.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.Build;
-using UnityEditor.Build.Reporting;
+#endif
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace com.unity.cliconfigmanager
 {
-    public class PrebuildSettingsConfigurator : IPreprocessBuildWithReport
+    public class PrebuildSettingsConfigurator
     {
-        public int callbackOrder
-        {
-            get { return -1; }
-        }
-
-        public readonly string ConfigManagerSettingsPath = "Assets/XR/Settings/ConfigManagerSettings.asset";
         private readonly OculusSettingsConfigurator oculusSettingsConfigurator = new OculusSettingsConfigurator();
         private readonly Regex customArgRegex = new Regex("-([^=]*)=", RegexOptions.Compiled);
-        private bool useCliConfigManager = true;
-        private ConfigManagerSettings configManagerSettings;
         private string packageId;
         private static readonly string XrSdkDefine = "XR_SDK";
         private static readonly string OculusSdkDefine = "OCULUS_SDK";
@@ -34,34 +25,19 @@ namespace com.unity.cliconfigmanager
             "OCULUS_SDK"
         };
 
-        public void OnPreprocessBuild(BuildReport report)
+        public void ConfigureFromCmdlineArgs()
         {
+#if UNITY_EDITOR
             SetScriptingDefinesAndUpdatePackages();
             ParseCommandLineArgs();
-            SetConfigManagerSettings();
-
-            if (configManagerSettings.EnableConfigManager)
-            {
-                PlatformSettings.SerializeToAsset();
-                ConfigureSettings();
-            }
+            PlatformSettings.SerializeToAsset();
+            ConfigureSettings();
+#endif
         }
-
+#if UNITY_EDITOR
         private static void SetScriptingDefinesAndUpdatePackages()
         {
-            var args = Environment.GetCommandLineArgs();
-            var defines = PlayerSettings
-                .GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
-                .Split(';')
-                .ToList();
-            var cleanedDefines = defines.ToList().Except(XrSdkDefines).ToList();
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
-                string.Empty);
-            WaitForDomainReload();
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
-                string.Join(";", cleanedDefines.ToArray()));
-            WaitForDomainReload();
-
+            var defines = GetNonXrSdkDefines(out var nonXrSdkDefines);
             var xrSdkPackageHandler = new XrSdkPackageHandler();
             xrSdkPackageHandler.RemoveXrPackages();
             WaitForDomainReload();
@@ -72,7 +48,8 @@ namespace com.unity.cliconfigmanager
                 PlayerSettings.virtualRealitySupported = false;
 
                 // TODO refactor so we can pass this in?
-                var oculusPackage = "file:../com.unity.xr.oculus";
+                //var oculusPackage = "file:../com.unity.xr.oculus";
+                var oculusPackage = "com.unity.xr.oculus";
                 xrSdkPackageHandler.AddPackage("com.unity.xr.management");
                 xrSdkPackageHandler.AddPackage(oculusPackage);
 
@@ -86,7 +63,24 @@ namespace com.unity.cliconfigmanager
             {
                 // Remove XR SDK defines if we know we're using legacy
                 PlayerSettings.virtualRealitySupported = true;
+
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+                    string.Join(";", nonXrSdkDefines.ToArray()));
+                AssetDatabase.SaveAssets();
+                WaitForDomainReload();
+                AssetDatabase.SaveAssets();
+                WaitForDomainReload();
             }
+        }
+
+        private static List<string> GetNonXrSdkDefines(out List<string> nonXrSdkDefines)
+        {
+            var defines = PlayerSettings
+                .GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
+                .Split(';')
+                .ToList();
+            nonXrSdkDefines = defines.ToList().Except(XrSdkDefines).ToList();
+            return defines;
         }
 
         private void ParseCommandLineArgs()
@@ -95,35 +89,6 @@ namespace com.unity.cliconfigmanager
             EnsureOptionsLowerCased(args);
             var optionSet = DefineOptionSet();
             var unParsedArgs = optionSet.Parse(args);
-        }
-
-        private void SetConfigManagerSettings()
-        {
-            if (!System.IO.File.Exists(ConfigManagerSettingsPath))
-            {
-                if (!System.IO.Directory.Exists(ConfigManagerSettingsPath))
-                {
-                    System.IO.Directory.CreateDirectory(ConfigManagerSettingsPath);
-                    configManagerSettings = ScriptableObject.CreateInstance<ConfigManagerSettings>();
-
-                    // Default to EnableConfigManager to true if this is a new ConfigManagerSettings
-                    configManagerSettings.EnableConfigManager = true;
-                    AssetDatabase.CreateAsset(configManagerSettings,ConfigManagerSettingsPath);
-                }
-            }
-            else
-            {
-                configManagerSettings = AssetDatabase.LoadAssetAtPath<ConfigManagerSettings>(ConfigManagerSettingsPath);
-            }
-
-            if (configManagerSettings == null)
-            {
-                throw new ArgumentNullException($"{typeof(ConfigManagerSettings).Name} is null, but shouldn't be.");
-            }
-
-            // This handles the case where the command line option passed in is different than the current value of settings.EnableConfigManager. In this
-            // case we assume you're running from command line and want to override with this passed in value.
-            configManagerSettings.EnableConfigManager = useCliConfigManager || configManagerSettings.EnableConfigManager;
         }
 
         private void EnsureOptionsLowerCased(string[] args)
@@ -139,22 +104,48 @@ namespace com.unity.cliconfigmanager
 
         private void ConfigureSettings()
         {
+            // Setup all-inclusive player settings
+            ConfigureAllInclusiveSettings();
+
+            // If XR target, configure XR
             if (!string.IsNullOrEmpty(PlatformSettings.XrTarget))
             {
                 ConfigureXr();
             }
 
+            // If Android, setup Android player settings
             if (PlatformSettings.BuildTarget == BuildTarget.Android)
             {
                 ConfigureAndroidSettings();
             }
 
-            if (PlatformSettings.PlayerGraphicsApi != GraphicsDeviceType.Null)
+            // If iOS, setup iOS player settings
+            if (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS)
             {
-                PlayerSettings.SetGraphicsAPIs(PlatformSettings.BuildTarget, new[] { PlatformSettings.PlayerGraphicsApi });
+                ConfigureIosSettings();
             }
         }
 
+        private static void ConfigureIosSettings()
+        {
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS,
+                string.Format("com.unity3d.{0}", PlayerSettings.productName));
+            PlayerSettings.iOS.appleDeveloperTeamID = PlatformSettings.AppleDeveloperTeamId;
+            PlayerSettings.iOS.appleEnableAutomaticSigning = false;
+            PlayerSettings.iOS.iOSManualProvisioningProfileID = PlatformSettings.IOsProvisioningProfileId;
+            PlayerSettings.iOS.iOSManualProvisioningProfileType = ProvisioningProfileType.Development;
+        }
+
+        private static void ConfigureAllInclusiveSettings()
+        {
+            if (PlatformSettings.PlayerGraphicsApi != GraphicsDeviceType.Null)
+            {
+                PlayerSettings.SetGraphicsAPIs(PlatformSettings.BuildTarget, new[] {PlatformSettings.PlayerGraphicsApi});
+            }
+
+            PlayerSettings.SetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup,
+                PlatformSettings.ScriptingImplementation);
+        }
 
         private void ConfigureXr()
         {
@@ -181,11 +172,15 @@ namespace com.unity.cliconfigmanager
         {
             EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
             PlayerSettings.Android.minSdkVersion = PlatformSettings.MinimumAndroidSdkVersion;
+            PlayerSettings.Android.targetSdkVersion = PlatformSettings.TargetAndroidSdkVersion;
         }
 
         private OptionSet DefineOptionSet()
         {
             return new OptionSet()
+                .Add("scriptingbackend=",
+                            "Scripting backend to use. IL2CPP is default. Values: IL2CPP, Mono",
+                            ParseScriptingBackend)
                 .Add("simulationmode=",
                     "Enable Simulation modes for Windows MR in Editor. Values: \r\n\"HoloLens\"\r\n\"WindowsMR\"\r\n\"Remoting\"",
                     simMode => PlatformSettings.SimulationMode = simMode)
@@ -209,8 +204,12 @@ namespace com.unity.cliconfigmanager
                     minAndroidSdkVersion => PlatformSettings.MinimumAndroidSdkVersion = TryParse<AndroidSdkVersions>(minAndroidSdkVersion))
                 .Add("targetandroidsdkversion=", "Target Android SDK Version to use.",
                     trgtAndroidSdkVersion => PlatformSettings.TargetAndroidSdkVersion = TryParse<AndroidSdkVersions>(trgtAndroidSdkVersion))
-                .Add("useconfigmanager", "Use CLI Config Manager to parse options and set build and player settings.",
-                    option => useCliConfigManager = option != null);
+                .Add("appleDeveloperTeamID=",
+                    "Apple Developer Team ID. Use for deployment and running tests on iOS device.",
+                    appleTeamId => PlatformSettings.AppleDeveloperTeamId = appleTeamId)
+                .Add("iOSProvisioningProfileID=",
+                    "iOS Provisioning Profile ID. Use for deployment and running tests on iOS device.",
+                    id => PlatformSettings.IOsProvisioningProfileId = id);
         }
 
         private void Action(string xrTarget)
@@ -258,6 +257,24 @@ namespace com.unity.cliconfigmanager
             {
             }
         }
+
+        private void ParseScriptingBackend(string scriptingBackend)
+        {
+            var sb = scriptingBackend.ToLower();
+            if (sb.Equals("mono"))
+            {
+                PlatformSettings.ScriptingImplementation = ScriptingImplementation.Mono2x;
+            }
+            else if (sb.Equals("il2cpp"))
+            {
+                PlatformSettings.ScriptingImplementation = ScriptingImplementation.IL2CPP;
+            }
+            else
+            {
+                throw new ArgumentException(string.Format(
+                    "Unrecognized scripting backend {0}. Valid options are Mono or IL2CPP", scriptingBackend));
+            }
+        }
+#endif
     }
 }
-#endif

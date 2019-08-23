@@ -4,20 +4,10 @@
         "GUID:e40ba710768534012815d3193fa296cb",
         "GUID:f9fe0089ec81f4079af78eb2287a6163",
         "GUID:4af21795022437d4bb139a86514b9ff9",
-        "GUID:d1502596da9f12c4ead8bb8b8542bdc8",
-        "GUID:33b4bc8ff031ca64cb5b84c47a40dd88",
-        "GUID:0bbd462d7dc8f9441973a4c86a22e16e"
+        "GUID:d1502596da9f12c4ead8bb8b8542bdc8"
     ],
     "includePlatforms": [],
-    "excludePlatforms": [
-        "LinuxStandalone64",
-        "macOSStandalone",
-        "Stadia",
-        "Switch",
-        "tvOS",
-        "WebGL",
-        "XboxOne"
-    ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],

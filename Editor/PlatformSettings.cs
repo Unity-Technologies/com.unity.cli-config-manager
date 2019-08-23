@@ -1,16 +1,20 @@
-﻿#if UNITY_EDITOR
-#if OCULUS_SDK
+﻿#if OCULUS_SDK
 using Unity.XR.Oculus;
 #endif
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.Rendering;
+#if ENABLE_VR
 using UnityEngine.XR;
+#endif
 
 namespace com.unity.cliconfigmanager
 {
     public static class PlatformSettings
     {
+#if UNITY_EDITOR
         public static BuildTargetGroup BuildTargetGroup => EditorUserBuildSettings.selectedBuildTargetGroup;
         public static BuildTarget BuildTarget => EditorUserBuildSettings.activeBuildTarget;
 
@@ -26,6 +30,9 @@ namespace com.unity.cliconfigmanager
         public static bool GraphicsJobs;
         public static AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
         public static AndroidSdkVersions TargetAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        public static ScriptingImplementation ScriptingImplementation = ScriptingImplementation.IL2CPP;
+        public static string AppleDeveloperTeamId;
+        public static string IOsProvisioningProfileId;
 
         public static string SimulationMode;
         private static readonly string ResourceDir = "Assets/Resources";
@@ -73,6 +80,6 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.CreateAsset(settingsAsset, ResourceDir + "/settings.asset");
             AssetDatabase.SaveAssets();
         }
+#endif
     }
 }
-#endif

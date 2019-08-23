@@ -1,13 +1,16 @@
-#if UNITY_IOS && UNITY_EDITOR
+#if UNITY_IOS
 using UnityEngine;
-using UnityEditor;
-using UnityEditor.Callbacks;
+#if UNITY_EDITOR
+//using UnityEditor;
+//using UnityEditor.Callbacks;
+#endif
 using System.IO;
 
 namespace com.unity.cliconfigmanager
 {
     public class MyBuildPostprocessor
     {
+#if UNITY_EDITOR
         // Build postprocessor. Currently only needed on:
         // - iOS: no dynamic libraries, so plugin source files have to be copied into Xcode project
         [PostProcessBuild]
@@ -16,6 +19,7 @@ namespace com.unity.cliconfigmanager
             if (target == BuildTarget.iOS)
                 OnPostprocessBuildIOS(pathToBuiltProject);
         }
+#endif
 
         private static void OnPostprocessBuildIOS(string pathToBuiltProject)
         {
