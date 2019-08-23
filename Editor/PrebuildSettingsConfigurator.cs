@@ -37,9 +37,14 @@ namespace com.unity.cliconfigmanager
 #if UNITY_EDITOR
         private static void SetScriptingDefinesAndUpdatePackages()
         {
-            var defines = GetNonXrSdkDefines(out var nonXrSdkDefines);
+            var nonXrSdkDefines = GetNonXrSdkDefines();
             var xrSdkPackageHandler = new XrSdkPackageHandler();
             xrSdkPackageHandler.RemoveXrPackages();
+            WaitForDomainReload();
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+                string.Join(";", nonXrSdkDefines.ToArray()));
+            WaitForDomainReload();
+            AssetDatabase.SaveAssets();
             WaitForDomainReload();
 
             if (IsOculusXrSdk())
@@ -53,34 +58,37 @@ namespace com.unity.cliconfigmanager
                 xrSdkPackageHandler.AddPackage("com.unity.xr.management");
                 xrSdkPackageHandler.AddPackage(oculusPackage);
 
+                List<string> defines = new List<string>(); 
                 defines.Add(XrSdkDefine);
                 defines.Add(OculusSdkDefine);
 
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
                     string.Join(";", defines.ToArray()));
+                WaitForDomainReload();
+                AssetDatabase.SaveAssets();
+                WaitForDomainReload();
             }
             else
             {
                 // Remove XR SDK defines if we know we're using legacy
                 PlayerSettings.virtualRealitySupported = true;
 
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
-                    string.Join(";", nonXrSdkDefines.ToArray()));
-                AssetDatabase.SaveAssets();
-                WaitForDomainReload();
-                AssetDatabase.SaveAssets();
-                WaitForDomainReload();
+                //PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
+                //    string.Join(";", nonXrSdkDefines.ToArray()));
+                //WaitForDomainReload();
+                //AssetDatabase.SaveAssets();
+                //WaitForDomainReload();
             }
         }
 
-        private static List<string> GetNonXrSdkDefines(out List<string> nonXrSdkDefines)
+        private static List<string> GetNonXrSdkDefines()
         {
             var defines = PlayerSettings
                 .GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup)
                 .Split(';')
                 .ToList();
-            nonXrSdkDefines = defines.ToList().Except(XrSdkDefines).ToList();
-            return defines;
+            var nonXrSdkDefines = defines.ToList().Except(XrSdkDefines).ToList();
+            return nonXrSdkDefines;
         }
 
         private void ParseCommandLineArgs()
