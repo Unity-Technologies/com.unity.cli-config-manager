@@ -25,6 +25,9 @@ namespace com.unity.cliconfigmanager
             "OCULUS_SDK"
         };
 
+        private static readonly string OculusXrSdkPackageId = "com.unity.xr.oculus";
+        private static readonly string XrManagementPackageId = "com.unity.xr.management";
+
         public void ConfigureFromCmdlineArgs()
         {
 #if UNITY_EDITOR
@@ -39,45 +42,28 @@ namespace com.unity.cliconfigmanager
         {
             var nonXrSdkDefines = GetNonXrSdkDefines();
             var xrSdkPackageHandler = new XrSdkPackageHandler();
-            xrSdkPackageHandler.RemoveXrPackages();
+            xrSdkPackageHandler.RemoveXrSdkPackages();
             WaitForDomainReload();
             PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
                 string.Join(";", nonXrSdkDefines.ToArray()));
             WaitForDomainReload();
             AssetDatabase.SaveAssets();
-            WaitForDomainReload();
 
             if (IsOculusXrSdk())
             {
-                // Need to turn off legacy xr support if using xr sdk. 
                 PlayerSettings.virtualRealitySupported = false;
 
-                // TODO refactor so we can pass this in?
-                //var oculusPackage = "file:../com.unity.xr.oculus";
-                var oculusPackage = "com.unity.xr.oculus";
-                xrSdkPackageHandler.AddPackage("com.unity.xr.management");
-                xrSdkPackageHandler.AddPackage(oculusPackage);
+                xrSdkPackageHandler.AddPackage(XrManagementPackageId);
+                xrSdkPackageHandler.AddPackage(OculusXrSdkPackageId);
 
-                List<string> defines = new List<string>(); 
-                defines.Add(XrSdkDefine);
-                defines.Add(OculusSdkDefine);
+                List<string> defines = new List<string> {XrSdkDefine, OculusSdkDefine};
 
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
                     string.Join(";", defines.ToArray()));
-                WaitForDomainReload();
-                AssetDatabase.SaveAssets();
-                WaitForDomainReload();
             }
             else
             {
-                // Remove XR SDK defines if we know we're using legacy
                 PlayerSettings.virtualRealitySupported = true;
-
-                //PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
-                //    string.Join(";", nonXrSdkDefines.ToArray()));
-                //WaitForDomainReload();
-                //AssetDatabase.SaveAssets();
-                //WaitForDomainReload();
             }
         }
 

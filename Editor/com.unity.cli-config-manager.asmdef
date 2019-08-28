@@ -1,10 +1,12 @@
 {
     "name": "com.unity.cli-config-manager",
     "references": [
-        "GUID:e40ba710768534012815d3193fa296cb",
-        "GUID:f9fe0089ec81f4079af78eb2287a6163",
-        "GUID:4af21795022437d4bb139a86514b9ff9",
-        "GUID:d1502596da9f12c4ead8bb8b8542bdc8"
+        "com.unity.xr.tests.runtimesettings",
+        "com.unity.xr.test.packagehandler",
+        "Unity.XR.Oculus",
+        "Unity.XR.Oculus.Editor",
+        "Unity.XR.Management",
+        "Unity.XR.Management.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,6 +1,8 @@
 ﻿#if OCULUS_SDK
 using Unity.XR.Oculus;
 #endif
+
+using com.unity.xr.test.runtimesettings;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -43,11 +45,11 @@ namespace com.unity.cliconfigmanager
 
             settingsAsset.EnabledXrTarget = XrTarget;
 
-            settingsAsset.PlayerGraphicsApi = PlayerGraphicsApi;
-            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath);
+            settingsAsset.PlayerGraphicsApi = PlayerGraphicsApi.ToString();
+            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath).ToString();
 #if OCULUS_SDK
-            settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop;
-            settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid;
+            settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
+            settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid.ToString();
 #endif
             settingsAsset.MtRendering = MtRendering;
             settingsAsset.GraphicsJobs = GraphicsJobs;
