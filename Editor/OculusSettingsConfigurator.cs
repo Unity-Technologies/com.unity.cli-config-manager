@@ -27,12 +27,12 @@ namespace com.unity.cliconfigmanager
             if (PlatformSettings.BuildTarget == BuildTarget.Android)
             {
                 PlatformSettings.StereoRenderingModeAndroid =
- PrebuildSettingsConfigurator.TryParse<OculusSettings.StereoRenderingMode>(srp);
+ PrebuildSettingsConfigurator.TryParse<OculusSettings.StereoRenderingModeAndroid>(srp);
             }
             else
             {
                 PlatformSettings.StereoRenderingModeDesktop =
- PrebuildSettingsConfigurator.TryParse<OculusSettings.StereoRenderingMode>(srp);
+ PrebuildSettingsConfigurator.TryParse<OculusSettings.StereoRenderingModeDesktop>(srp);
             }
 #endif
         }

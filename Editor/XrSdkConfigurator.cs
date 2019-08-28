@@ -28,9 +28,8 @@ namespace com.unity.cliconfigmanager
             var buildTargetSettings = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
 
             xrGeneralSettings.Manager = managerSettings;
-            string xrSdkSettingsName;
 #if OCULUS_SDK
-            xrSdkSettingsName = "Unity.XR.Oculus.Settings";
+            var xrSdkSettingsName = "Unity.XR.Oculus.Settings";
             var settings = ScriptableObject.CreateInstance<OculusSettings>();
 
             if (settings == null)
@@ -58,11 +57,11 @@ namespace com.unity.cliconfigmanager
 
             if (PlatformSettings.BuildTarget == BuildTarget.Android)
             {
-                settings.StereoRenderingModeAndroid = PlatformSettings.StereoRenderingModeAndroid;
+                settings.m_StereoRenderingModeAndroid = PlatformSettings.StereoRenderingModeAndroid;
             }
             else
             {
-                settings.StereoRenderingModeDesktop = PlatformSettings.StereoRenderingModeDesktop;
+                settings.m_StereoRenderingModeDesktop = PlatformSettings.StereoRenderingModeDesktop;
             }
 
             AssetDatabase.SaveAssets();

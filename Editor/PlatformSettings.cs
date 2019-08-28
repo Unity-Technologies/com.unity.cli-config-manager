@@ -25,8 +25,8 @@ namespace com.unity.cliconfigmanager
 
         public static StereoRenderingPath StereoRenderingPath;
 #if OCULUS_SDK
-        public static OculusSettings.StereoRenderingMode StereoRenderingModeDesktop;
-        public static OculusSettings.StereoRenderingMode StereoRenderingModeAndroid;
+        public static OculusSettings.StereoRenderingModeDesktop StereoRenderingModeDesktop;
+        public static OculusSettings.StereoRenderingModeAndroid StereoRenderingModeAndroid;
 #endif
         public static bool MtRendering = true;
         public static bool GraphicsJobs;
