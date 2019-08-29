@@ -133,6 +133,9 @@ namespace com.unity.cliconfigmanager
 
         private static void ConfigureAllInclusiveSettings()
         {
+			// Initialize legacy VR to off
+			PlayerSettings.virtualRealitySupported = false;
+			
             if (PlatformSettings.PlayerGraphicsApi != GraphicsDeviceType.Null)
             {
                 PlayerSettings.SetGraphicsAPIs(PlatformSettings.BuildTarget, new[] {PlatformSettings.PlayerGraphicsApi});
