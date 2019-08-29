@@ -22,15 +22,16 @@ namespace com.unity.cliconfigmanager
         {
 #if OCULUS_SDK
             // This allows us to be "backward compatible".
-            PlayerSettings.virtualRealitySupported = false;
-            var srp = stereoRenderingPath.Equals("SinglePass") || stereoRenderingPath.Contains("Instancing") ? "SinglePassInstanced" : stereoRenderingPath;
+            
             if (PlatformSettings.BuildTarget == BuildTarget.Android)
             {
+                var srp = stereoRenderingPath.Equals("SinglePass") ? "Multiview" : stereoRenderingPath;
                 PlatformSettings.StereoRenderingModeAndroid =
  PrebuildSettingsConfigurator.TryParse<OculusSettings.StereoRenderingModeAndroid>(srp);
             }
             else
             {
+                var srp = stereoRenderingPath.Equals("SinglePass") || stereoRenderingPath.Contains("Instancing") ? "SinglePassInstanced" : stereoRenderingPath;
                 PlatformSettings.StereoRenderingModeDesktop =
  PrebuildSettingsConfigurator.TryParse<OculusSettings.StereoRenderingModeDesktop>(srp);
             }
