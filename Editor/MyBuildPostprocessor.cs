@@ -1,8 +1,8 @@
 #if UNITY_IOS
 using UnityEngine;
 #if UNITY_EDITOR
-//using UnityEditor;
-//using UnityEditor.Callbacks;
+using UnityEditor;
+using UnityEditor.Callbacks;
 #endif
 using System.IO;
 
