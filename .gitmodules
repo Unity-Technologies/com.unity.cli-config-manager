@@ -1,0 +1,3 @@
+[submodule "com.unity.xr.test.runtimesettings"]
+	path = com.unity.xr.test.runtimesettings
+	url = git@github.cds.internal.unity3d.com:unity/com.unity.xr.test.runtimesettings.git
