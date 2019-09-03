@@ -14,50 +14,50 @@ using UnityEngine.XR;
 
 namespace com.unity.cliconfigmanager
 {
-    public static class PlatformSettings
+    public class PlatformSettings
     {
 #if UNITY_EDITOR
-        public static BuildTargetGroup BuildTargetGroup => EditorUserBuildSettings.selectedBuildTargetGroup;
-        public static BuildTarget BuildTarget => EditorUserBuildSettings.activeBuildTarget;
+        public BuildTargetGroup BuildTargetGroup => EditorUserBuildSettings.selectedBuildTargetGroup;
+        public BuildTarget BuildTarget => EditorUserBuildSettings.activeBuildTarget;
 
-        public static string XrTarget;
-        public static GraphicsDeviceType PlayerGraphicsApi;
-
-        public static StereoRenderingPath StereoRenderingPath;
+        public string XrTarget;
+        public GraphicsDeviceType PlayerGraphicsApi;
+        public StereoRenderingPath StereoRenderingPath;
 #if OCULUS_SDK
-        public static OculusSettings.StereoRenderingModeDesktop StereoRenderingModeDesktop;
-        public static OculusSettings.StereoRenderingModeAndroid StereoRenderingModeAndroid;
+        public OculusSettings.StereoRenderingModeDesktop StereoRenderingModeDesktop;
+        public OculusSettings.StereoRenderingModeAndroid StereoRenderingModeAndroid;
 #endif
-        public static bool MtRendering = true;
-        public static bool GraphicsJobs;
-        public static AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
-        public static AndroidSdkVersions TargetAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
-        public static ScriptingImplementation ScriptingImplementation = ScriptingImplementation.IL2CPP;
-        public static string AppleDeveloperTeamId;
-        public static string IOsProvisioningProfileId;
+        public bool MtRendering = true;
+        public bool GraphicsJobs;
+        public AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+        public AndroidSdkVersions TargetAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.IL2CPP;
+        public string AppleDeveloperTeamId;
+        public string IOsProvisioningProfileId;
+        public ColorSpace ColorSpace = ColorSpace.Gamma;
 
-        public static string SimulationMode;
-        private static readonly string ResourceDir = "Assets/Resources";
+        public string SimulationMode;
+        private readonly string ResourceDir = "Assets/Resources";
 
-        public static void SerializeToAsset()
+        public void SerializeToAsset()
         {
             var settingsAsset = ScriptableObject.CreateInstance<CurrentSettings>();
 
-            settingsAsset.EnabledXrTarget = XrTarget;
-
             settingsAsset.PlayerGraphicsApi = PlayerGraphicsApi.ToString();
+            settingsAsset.MtRendering = MtRendering;
+            settingsAsset.GraphicsJobs = GraphicsJobs;
+            settingsAsset.ColorSpace = ColorSpace.ToString();
+
+            settingsAsset.EnabledXrTarget = XrTarget;
             settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath).ToString();
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
             settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid.ToString();
 #endif
-            settingsAsset.MtRendering = MtRendering;
-            settingsAsset.GraphicsJobs = GraphicsJobs;
-
             CreateAndSaveCurrentSettingsAsset(settingsAsset);
         }
 
-        private static XRSettings.StereoRenderingMode GetXrStereoRenderingPathMapping(StereoRenderingPath stereoRenderingPath)
+        private XRSettings.StereoRenderingMode GetXrStereoRenderingPathMapping(StereoRenderingPath stereoRenderingPath)
         {
             switch (stereoRenderingPath)
             {
@@ -72,7 +72,7 @@ namespace com.unity.cliconfigmanager
             }
         }
 
-        private static void CreateAndSaveCurrentSettingsAsset(CurrentSettings settingsAsset)
+        private void CreateAndSaveCurrentSettingsAsset(CurrentSettings settingsAsset)
         {
             if (!System.IO.Directory.Exists(ResourceDir))
             {
