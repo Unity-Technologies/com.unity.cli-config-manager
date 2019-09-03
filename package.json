@@ -3,9 +3,5 @@
   "displayName": "Unity CLI Configuration Manager",
   "version": "0.1.0-preview",
   "unity": "2018.1",
-  "description": "Provides a command line parser and options to set build, player, and other Unity settings when running Unity from the command line.",
-	"dependencies": {
-		"com.unity.xr.tests.runtimesettings": "ssh://git@github.cds.internal.unity3d.com/unity/com.unity.xr.test.runtimesettings.git",
-		"com.unity.xr.test.packagehandler": "ssh://git@github.cds.internal.unity3d.com/unity/com.unity.xr.test.packagehandler.git"
-	}
+  "description": "Provides a command line parser and options to set build, player, and other Unity settings when running Unity from the command line."
 }
