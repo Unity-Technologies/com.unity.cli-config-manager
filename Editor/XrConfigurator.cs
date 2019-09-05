@@ -23,10 +23,10 @@ namespace com.unity.cliconfigmanager
         {
             this.platformSettings = platformSettings;
         }
-
+#if UNITY_EDITOR
         public void ConfigureXr()
         {
-#if UNITY_EDITOR
+
 #if XR_SDK
             string testXrGeneralSettingsPath = "Assets/XR/Settings/Test Settings.asset";
             PlayerSettings.virtualRealitySupported = false;
@@ -38,26 +38,52 @@ namespace com.unity.cliconfigmanager
 
             xrGeneralSettings.Manager = managerSettings;
 #if OCULUS_SDK
+            ConfigureOculusXrSdk(xrGeneralSettings, buildTargetSettings, testXrGeneralSettingsPath, managerSettings);
+#endif
+#endif
+
+#if !XR_SDK
+            ConfigureLegacyVr();
+#endif
+        }
+
+#if  !XR_SDK
+        private void ConfigureLegacyVr()
+        {
+            PlayerSettings.virtualRealitySupported = true;
+            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup,
+                new string[] {platformSettings.XrTarget});
+            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
+        }
+#endif
+
+#if OCULUS_SDK
+        private void ConfigureOculusXrSdk(XRGeneralSettings xrGeneralSettings,
+            XRGeneralSettingsPerBuildTarget buildTargetSettings, string testXrGeneralSettingsPath,
+            XRManagerSettings managerSettings)
+        {
             var xrSdkSettingsName = "Unity.XR.Oculus.Settings";
             var settings = ScriptableObject.CreateInstance<OculusSettings>();
 
             if (settings == null)
             {
-                throw new ArgumentNullException($"Tried to instantiate an instance of {typeof(OculusSettings).Name} but it is null.");
+                throw new ArgumentNullException(
+                    $"Tried to instantiate an instance of {typeof(OculusSettings).Name} but it is null.");
             }
 
             var loader = ScriptableObject.CreateInstance<OculusLoader>();
 
             if (loader == null)
             {
-                throw new ArgumentNullException($"Tried to instantiate an instance of {typeof(OculusLoader).Name}, but it is null.");
+                throw new ArgumentNullException(
+                    $"Tried to instantiate an instance of {typeof(OculusLoader).Name}, but it is null.");
             }
 
             xrGeneralSettings.Manager.loaders.Add(loader);
 
             buildTargetSettings.SetSettingsForBuildTarget(EditorUserBuildSettings.selectedBuildTargetGroup,
                 xrGeneralSettings);
-            
+
             AssetDatabase.CreateAsset(buildTargetSettings, testXrGeneralSettingsPath);
             AssetDatabase.AddObjectToAsset(xrGeneralSettings, testXrGeneralSettingsPath);
             AssetDatabase.AddObjectToAsset(managerSettings, testXrGeneralSettingsPath);
@@ -76,13 +102,9 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.SaveAssets();
             EditorBuildSettings.AddConfigObject(xrSdkSettingsName, settings, true);
             EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, buildTargetSettings, true);
-#endif
-#else
-            PlayerSettings.virtualRealitySupported = true;
-            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup, new string[] { platformSettings.XrTarget });
-            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
-#endif
-#endif
         }
+#endif
+#endif
     }
+
 }
