@@ -22,10 +22,12 @@ namespace com.unity.cliconfigmanager
 
         public string XrTarget;
         public GraphicsDeviceType PlayerGraphicsApi;
-        public StereoRenderingPath StereoRenderingPath;
+
 #if OCULUS_SDK
         public OculusSettings.StereoRenderingModeDesktop StereoRenderingModeDesktop;
         public OculusSettings.StereoRenderingModeAndroid StereoRenderingModeAndroid;
+#else
+        public StereoRenderingPath StereoRenderingPath;
 #endif
         public bool MtRendering = true;
         public bool GraphicsJobs;
@@ -47,12 +49,12 @@ namespace com.unity.cliconfigmanager
             settingsAsset.MtRendering = MtRendering;
             settingsAsset.GraphicsJobs = GraphicsJobs;
             settingsAsset.ColorSpace = ColorSpace.ToString();
-
             settingsAsset.EnabledXrTarget = XrTarget;
-            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath).ToString();
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
             settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid.ToString();
+#else
+            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath).ToString();
 #endif
             CreateAndSaveCurrentSettingsAsset(settingsAsset);
         }

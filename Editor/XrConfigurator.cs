@@ -1,4 +1,6 @@
-﻿#if UNITY_EDITOR
+﻿
+using System.IO;
+#if UNITY_EDITOR
 #if XR_SDK
 using UnityEditor.XR.Management;
 using System;
@@ -51,9 +53,9 @@ namespace com.unity.cliconfigmanager
         private void ConfigureLegacyVr()
         {
             PlayerSettings.virtualRealitySupported = true;
+            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
             UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup,
                 new string[] {platformSettings.XrTarget});
-            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
         }
 #endif
 
@@ -62,6 +64,10 @@ namespace com.unity.cliconfigmanager
             XRGeneralSettingsPerBuildTarget buildTargetSettings, string testXrGeneralSettingsPath,
             XRManagerSettings managerSettings)
         {
+            EnsureArgumentNotNull(xrGeneralSettings);
+            EnsureArgumentNotNull(buildTargetSettings);
+            EnsureArgumentNotNull(managerSettings);
+
             var xrSdkSettingsName = "Unity.XR.Oculus.Settings";
             var settings = ScriptableObject.CreateInstance<OculusSettings>();
 
@@ -84,6 +90,7 @@ namespace com.unity.cliconfigmanager
             buildTargetSettings.SetSettingsForBuildTarget(EditorUserBuildSettings.selectedBuildTargetGroup,
                 xrGeneralSettings);
 
+            EnsureXrGeneralSettingsPathExists(testXrGeneralSettingsPath);
             AssetDatabase.CreateAsset(buildTargetSettings, testXrGeneralSettingsPath);
             AssetDatabase.AddObjectToAsset(xrGeneralSettings, testXrGeneralSettingsPath);
             AssetDatabase.AddObjectToAsset(managerSettings, testXrGeneralSettingsPath);
@@ -102,6 +109,23 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.SaveAssets();
             EditorBuildSettings.AddConfigObject(xrSdkSettingsName, settings, true);
             EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, buildTargetSettings, true);
+        }
+
+        private static void EnsureXrGeneralSettingsPathExists(string testXrGeneralSettingsPath)
+        {
+            var settingsPath = Path.GetDirectoryName(testXrGeneralSettingsPath);
+            if (!Directory.Exists(settingsPath))
+            {
+                Directory.CreateDirectory(testXrGeneralSettingsPath);
+            }
+        }
+
+        private static void EnsureArgumentNotNull(object arg)
+        {
+            if (arg == null)
+            {
+                throw new ArgumentNullException(nameof(arg));
+            }
         }
 #endif
 #endif

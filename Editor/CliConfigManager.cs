@@ -2,8 +2,12 @@
 using System;
 #if UNITY_EDITOR
 using UnityEditor;
+#if OCULUS_SDK
+using Unity.XR.Oculus;
+#endif
 #endif
 using System.Text.RegularExpressions;
+
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -11,7 +15,6 @@ namespace com.unity.cliconfigmanager
 {
     public class CliConfigManager
     {
-        public string StereoRenderingMode;
         private readonly Regex customArgRegex = new Regex("-([^=]*)=", RegexOptions.Compiled);
         private readonly PlatformSettings platformSettings = new PlatformSettings();
 
@@ -29,6 +32,7 @@ namespace com.unity.cliconfigmanager
             EnsureOptionsLowerCased(args);
             var optionSet = DefineOptionSet();
             var unParsedArgs = optionSet.Parse(args);
+            platformSettings.SerializeToAsset();
         }
 
         private void EnsureOptionsLowerCased(string[] args)
@@ -54,7 +58,7 @@ namespace com.unity.cliconfigmanager
             }
 
             // If iOS, setup iOS player settings
-            if (EditorUserBuildSettings.selectedBuildTargetGroup == BuildTargetGroup.iOS)
+            if (platformSettings.BuildTarget == BuildTarget.iOS)
             {
                 ConfigureIosSettings();
             }
@@ -68,8 +72,7 @@ namespace com.unity.cliconfigmanager
 
         private void ConfigureIosSettings()
         {
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS,
-                string.Format("com.unity3d.{0}", PlayerSettings.productName));
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, string.Format("com.unity3d.{0}", PlayerSettings.productName));
             PlayerSettings.iOS.appleDeveloperTeamID = platformSettings.AppleDeveloperTeamId;
             PlayerSettings.iOS.appleEnableAutomaticSigning = false;
             PlayerSettings.iOS.iOSManualProvisioningProfileID = platformSettings.IOsProvisioningProfileId;
@@ -99,50 +102,47 @@ namespace com.unity.cliconfigmanager
 
         private OptionSet DefineOptionSet()
         {
-            var optionsSet = new OptionSet()
-                .Add("scriptingbackend=",
-                            "Scripting backend to use. IL2CPP is default. Values: IL2CPP, Mono",
-                            ParseScriptingBackend)
-                .Add("simulationmode=",
-                    "Enable Simulation modes for Windows MR in Editor. Values: \r\n\"HoloLens\"\r\n\"WindowsMR\"\r\n\"Remoting\"",
-                    simMode => platformSettings.SimulationMode = simMode)
-                .Add("enabledxrtarget|enabledxrtargets=",
-                    "XR target to enable in player settings. Values: " +
-                    "\r\n\"Oculus\"\r\n\"OpenVR\"\r\n\"cardboard\"\r\n\"daydream\"\r\n\"MockHMD\"\r\n\"OculusXRSDK\"\r\n\"MagicLeapXRSDK\"\r\n\"WindowsMRXRSDK\"",
-                    Action)
-                .Add("playergraphicsapi=", "Graphics API based on GraphicsDeviceType.",
-                    graphicsDeviceType => platformSettings.PlayerGraphicsApi = TryParse<GraphicsDeviceType>(graphicsDeviceType))
-                .Add("colorspace=", "Linear or Gamma color space.",
-                    colorSpace => platformSettings.ColorSpace = TryParse<ColorSpace>(colorSpace))
-                .Add("stereorenderingpath=", "Stereo rendering path to enable. SinglePass is default",
-                    srm => StereoRenderingMode = srm)
-                .Add("mtRendering",
-                    "Enable or disable multithreaded rendering. Enabled is default. Use option to enable, or use option and append '-' to disable.",
-                    option => platformSettings.MtRendering = option != null)
-                .Add("graphicsJobs",
-                    "Enable graphics jobs rendering. Disabled is default. Use option to enable, or use option and append '-' to disable.",
-                    option => platformSettings.GraphicsJobs = option != null)
-                .Add("minimumandroidsdkversion=", "Minimum Android SDK Version to use.",
-                    minAndroidSdkVersion => platformSettings.MinimumAndroidSdkVersion = TryParse<AndroidSdkVersions>(minAndroidSdkVersion))
-                .Add("targetandroidsdkversion=", "Target Android SDK Version to use.",
-                    trgtAndroidSdkVersion => platformSettings.TargetAndroidSdkVersion = TryParse<AndroidSdkVersions>(trgtAndroidSdkVersion))
-                .Add("appleDeveloperTeamID=",
-                    "Apple Developer Team ID. Use for deployment and running tests on iOS device.",
-                    appleTeamId => platformSettings.AppleDeveloperTeamId = appleTeamId)
-                .Add("iOSProvisioningProfileID=",
+            var optionsSet = new OptionSet();
+            optionsSet.Add("scriptingbackend=",
+                "Scripting backend to use. IL2CPP is default. Values: IL2CPP, Mono", ParseScriptingBackend);
+            optionsSet.Add("simulationmode=",
+                "Enable Simulation modes for Windows MR in Editor. Values: \r\n\"HoloLens\"\r\n\"WindowsMR\"\r\n\"Remoting\"",
+                simMode => platformSettings.SimulationMode = simMode);
+            optionsSet.Add("enabledxrtarget|enabledxrtargets=",
+                "XR target to enable in player settings. Values: " +
+                "\r\n\"Oculus\"\r\n\"OpenVR\"\r\n\"cardboard\"\r\n\"daydream\"\r\n\"MockHMD\"\r\n\"OculusXRSDK\"\r\n\"MagicLeapXRSDK\"\r\n\"WindowsMRXRSDK\"",
+                xrTarget => platformSettings.XrTarget = xrTarget);
+            optionsSet.Add("playergraphicsapi=", "Graphics API based on GraphicsDeviceType.",
+                graphicsDeviceType =>
+                    platformSettings.PlayerGraphicsApi = TryParse<GraphicsDeviceType>(graphicsDeviceType));
+            optionsSet.Add("colorspace=", "Linear or Gamma color space.",
+                colorSpace => platformSettings.ColorSpace = TryParse<ColorSpace>(colorSpace));
+#if OCULUS_SDK
+            optionsSet.Add("stereorenderingpath=", "Stereo rendering path to enable. SinglePass is default", TryParseOculusXrSdkSrm);
+#else
+            optionsSet.Add("stereorenderingpath=", "Stereo rendering path to enable. SinglePass is default", TryParseLegacyVrSrm);
+#endif
+            optionsSet.Add("mtRendering",
+                "Enable or disable multithreaded rendering. Enabled is default. Use option to enable, or use option and append '-' to disable.",
+                option => platformSettings.MtRendering = option != null);
+            optionsSet.Add("graphicsJobs",
+                "Enable graphics jobs rendering. Disabled is default. Use option to enable, or use option and append '-' to disable.",
+                option => platformSettings.GraphicsJobs = option != null);
+            optionsSet.Add("minimumandroidsdkversion=", "Minimum Android SDK Version to use.",
+                minAndroidSdkVersion => platformSettings.MinimumAndroidSdkVersion =
+                    TryParse<AndroidSdkVersions>(minAndroidSdkVersion));
+            optionsSet.Add("targetandroidsdkversion=", "Target Android SDK Version to use.",
+                trgtAndroidSdkVersion => platformSettings.TargetAndroidSdkVersion =
+                    TryParse<AndroidSdkVersions>(trgtAndroidSdkVersion));
+            optionsSet.Add("appleDeveloperTeamID=",
+                "Apple Developer Team ID. Use for deployment and running tests on iOS device.",
+                appleTeamId => platformSettings.AppleDeveloperTeamId = appleTeamId);
+            optionsSet.Add("iOSProvisioningProfileID=",
                     "iOS Provisioning Profile ID. Use for deployment and running tests on iOS device.",
                     id => platformSettings.IOsProvisioningProfileId = id);
-
-            platformSettings.SerializeToAsset();
-
             return optionsSet;
         }
-
-        private void Action(string xrTarget)
-        {
-            platformSettings.XrTarget = xrTarget;
-        }
-
+        
         public static T TryParse<T>(string stringToParse)
         {
             T thisType;
@@ -157,6 +157,26 @@ namespace com.unity.cliconfigmanager
 
             return thisType;
         }
+#if OCULUS_SDK
+        private void TryParseOculusXrSdkSrm(string srm)
+        {
+            if (platformSettings.BuildTarget == BuildTarget.Android)
+            {
+                platformSettings.StereoRenderingModeAndroid = TryParse<OculusSettings.StereoRenderingModeAndroid>(srm);
+            }
+            else
+            {
+                platformSettings.StereoRenderingModeDesktop = TryParse<OculusSettings.StereoRenderingModeDesktop>(srm);
+            }
+        }
+#else
+
+        private void TryParseLegacyVrSrm(string srm)
+        {
+                platformSettings.StereoRenderingPath = TryParse<StereoRenderingPath>(srm);
+        }
+
+#endif
 
         private void ParseScriptingBackend(string scriptingBackend)
         {
