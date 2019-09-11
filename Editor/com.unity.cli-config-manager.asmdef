@@ -1,0 +1,20 @@
+{
+    "name": "com.unity.cli-config-manager",
+    "references": [
+        "com.unity.xr.tests.runtimesettings",
+        "com.unity.xr.test.packagehandler",
+        "Unity.XR.Oculus",
+        "Unity.XR.Oculus.Editor",
+        "Unity.XR.Management",
+        "Unity.XR.Management.Editor"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
