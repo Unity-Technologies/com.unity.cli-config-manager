@@ -24,7 +24,7 @@ namespace com.unity.cliconfigmanager
         private static void OnPostprocessBuildIOS(string pathToBuiltProject)
         {
             // We use UnityEditor.iOS.Xcode API which only exists in iOS editor module
-
+#if UNITY_IOS
 
 		string projPath = pathToBuiltProject + "/Unity-iPhone.xcodeproj/project.pbxproj";
 
@@ -54,6 +54,7 @@ namespace com.unity.cliconfigmanager
 		}
 
 		File.WriteAllText(projPath, proj.WriteToString());
+#endif
         }
     }
 }
