@@ -45,6 +45,7 @@ namespace com.unity.cliconfigmanager
         {
             var settingsAsset = ScriptableObject.CreateInstance<CurrentSettings>();
 
+            settingsAsset.SimulationMode = SimulationMode;
             settingsAsset.PlayerGraphicsApi = PlayerGraphicsApi.ToString();
             settingsAsset.MtRendering = MtRendering;
             settingsAsset.GraphicsJobs = GraphicsJobs;
