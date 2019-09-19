@@ -134,10 +134,10 @@ namespace com.unity.cliconfigmanager
             optionsSet.Add("targetandroidsdkversion=", "Target Android SDK Version to use.",
                 trgtAndroidSdkVersion => platformSettings.TargetAndroidSdkVersion =
                     TryParse<AndroidSdkVersions>(trgtAndroidSdkVersion));
-            optionsSet.Add("appleDeveloperTeamID=",
+            optionsSet.Add("appledeveloperteamid=",
                 "Apple Developer Team ID. Use for deployment and running tests on iOS device.",
                 appleTeamId => platformSettings.AppleDeveloperTeamId = appleTeamId);
-            optionsSet.Add("iOSProvisioningProfileID=",
+            optionsSet.Add("iosprovisioningprofileid=",
                     "iOS Provisioning Profile ID. Use for deployment and running tests on iOS device.",
                     id => platformSettings.IOsProvisioningProfileId = id);
             return optionsSet;

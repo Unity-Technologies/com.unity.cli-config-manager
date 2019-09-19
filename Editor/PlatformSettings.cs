@@ -33,7 +33,7 @@ namespace com.unity.cliconfigmanager
         public bool GraphicsJobs;
         public AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
         public AndroidSdkVersions TargetAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
-        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.IL2CPP;
+        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.Mono2x;
         public string AppleDeveloperTeamId;
         public string IOsProvisioningProfileId;
         public ColorSpace ColorSpace = ColorSpace.Gamma;
@@ -45,6 +45,7 @@ namespace com.unity.cliconfigmanager
         {
             var settingsAsset = ScriptableObject.CreateInstance<CurrentSettings>();
 
+            settingsAsset.SimulationMode = SimulationMode;
             settingsAsset.PlayerGraphicsApi = PlayerGraphicsApi.ToString();
             settingsAsset.MtRendering = MtRendering;
             settingsAsset.GraphicsJobs = GraphicsJobs;
