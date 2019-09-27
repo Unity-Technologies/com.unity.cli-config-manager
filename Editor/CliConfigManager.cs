@@ -82,12 +82,14 @@ namespace com.unity.cliconfigmanager
         private void ConfigureCrossplatformSettings()
         {
 			PlayerSettings.virtualRealitySupported = false;
-            PlayerSettings.colorSpace = platformSettings.ColorSpace;
 
             if (platformSettings.PlayerGraphicsApi != GraphicsDeviceType.Null)
             {
+                PlayerSettings.SetUseDefaultGraphicsAPIs(platformSettings.BuildTarget, false);
                 PlayerSettings.SetGraphicsAPIs(platformSettings.BuildTarget, new[] {platformSettings.PlayerGraphicsApi});
             }
+
+            PlayerSettings.colorSpace = platformSettings.ColorSpace;
 
             PlayerSettings.SetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup,
                 platformSettings.ScriptingImplementation);
