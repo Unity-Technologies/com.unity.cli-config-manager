@@ -14,11 +14,15 @@ using UnityEngine.XR.Management;
 #if OCULUS_SDK
 using Unity.XR.Oculus;
 #endif
+#if MOCKHMD_SDK
+using Unity.XR.MockHMD;
+#endif
 
 namespace com.unity.cliconfigmanager
 {
     public class XrConfigurator
     {
+        private readonly string xrsdkTestXrSettingsPath = "Assets/XR/Settings/Test Settings.asset";
         private readonly PlatformSettings platformSettings;
 
         public XrConfigurator(PlatformSettings platformSettings)
@@ -28,9 +32,16 @@ namespace com.unity.cliconfigmanager
 #if UNITY_EDITOR
         public void ConfigureXr()
         {
+#if XR_SDK
+            ConfigureXrSdk();
+#else
+            ConfigureLegacyVr();
+#endif
+        }
 
 #if XR_SDK
-            string testXrGeneralSettingsPath = "Assets/XR/Settings/Test Settings.asset";
+        private void ConfigureXrSdk()
+        {
             PlayerSettings.virtualRealitySupported = false;
 
             // Create our own test version of xr general settings.
@@ -39,63 +50,36 @@ namespace com.unity.cliconfigmanager
             var buildTargetSettings = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
 
             xrGeneralSettings.Manager = managerSettings;
+            EnsureArgumentsNotNull(xrGeneralSettings, buildTargetSettings, managerSettings);
 #if OCULUS_SDK
-            ConfigureOculusXrSdk(xrGeneralSettings, buildTargetSettings, testXrGeneralSettingsPath, managerSettings);
+            SetupLoader<OculusLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
 #endif
+#if MOCKHMD_SDK
+            SetupLoader<MockHMDLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
 #endif
-
-#if !XR_SDK
-            ConfigureLegacyVr();
+            
+#if OCULUS_SDK
+            var settings = ConfigureOculusSettings();
+#endif
+            AssetDatabase.SaveAssets();
+            
+            EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, buildTargetSettings, true);
+#if OCULUS_SDK
+            EditorBuildSettings.AddConfigObject("Unity.XR.Oculus.Settings", settings, true);
 #endif
         }
 
-#if  !XR_SDK
-        private void ConfigureLegacyVr()
-        {
-            PlayerSettings.virtualRealitySupported = true;
-            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
-            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup,
-                new string[] {platformSettings.XrTarget});
-        }
-#endif
-
 #if OCULUS_SDK
-        private void ConfigureOculusXrSdk(XRGeneralSettings xrGeneralSettings,
-            XRGeneralSettingsPerBuildTarget buildTargetSettings, string testXrGeneralSettingsPath,
-            XRManagerSettings managerSettings)
+        private OculusSettings ConfigureOculusSettings()
         {
-            EnsureArgumentNotNull(xrGeneralSettings);
-            EnsureArgumentNotNull(buildTargetSettings);
-            EnsureArgumentNotNull(managerSettings);
-
-            var xrSdkSettingsName = "Unity.XR.Oculus.Settings";
             var settings = ScriptableObject.CreateInstance<OculusSettings>();
-
             if (settings == null)
             {
                 throw new ArgumentNullException(
                     $"Tried to instantiate an instance of {typeof(OculusSettings).Name} but it is null.");
             }
 
-            var loader = ScriptableObject.CreateInstance<OculusLoader>();
-
-            if (loader == null)
-            {
-                throw new ArgumentNullException(
-                    $"Tried to instantiate an instance of {typeof(OculusLoader).Name}, but it is null.");
-            }
-
-            xrGeneralSettings.Manager.loaders.Add(loader);
-
-            buildTargetSettings.SetSettingsForBuildTarget(EditorUserBuildSettings.selectedBuildTargetGroup,
-                xrGeneralSettings);
-
-            EnsureXrGeneralSettingsPathExists(testXrGeneralSettingsPath);
-            AssetDatabase.CreateAsset(buildTargetSettings, testXrGeneralSettingsPath);
-            AssetDatabase.AddObjectToAsset(xrGeneralSettings, testXrGeneralSettingsPath);
-            AssetDatabase.AddObjectToAsset(managerSettings, testXrGeneralSettingsPath);
-            AssetDatabase.AddObjectToAsset(settings, testXrGeneralSettingsPath);
-            AssetDatabase.AddObjectToAsset(loader, testXrGeneralSettingsPath);
+            AssetDatabase.AddObjectToAsset(settings, xrsdkTestXrSettingsPath);
 
             if (platformSettings.BuildTarget == BuildTarget.Android)
             {
@@ -106,12 +90,45 @@ namespace com.unity.cliconfigmanager
                 settings.m_StereoRenderingModeDesktop = platformSettings.StereoRenderingModeDesktop;
             }
 
-            AssetDatabase.SaveAssets();
-            EditorBuildSettings.AddConfigObject(xrSdkSettingsName, settings, true);
-            EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, buildTargetSettings, true);
+            return settings;
+        }
+#endif
+
+        private void SetupLoader<T>(XRGeneralSettings xrGeneralSettings,
+            XRGeneralSettingsPerBuildTarget buildTargetSettings,
+            XRManagerSettings managerSettings) where T : XRLoader
+        {
+            var loader = ScriptableObject.CreateInstance<T>();
+
+            if (loader == null)
+            {
+                throw new ArgumentNullException(
+                    $"Tried to instantiate an instance of {typeof(T).Name}, but it is null.");
+            }
+
+            xrGeneralSettings.Manager.loaders.Add(loader);
+
+            buildTargetSettings.SetSettingsForBuildTarget(EditorUserBuildSettings.selectedBuildTargetGroup,
+                xrGeneralSettings);
+
+            EnsureXrGeneralSettingsPathExists(xrsdkTestXrSettingsPath);
+
+            AssetDatabase.CreateAsset(buildTargetSettings, xrsdkTestXrSettingsPath);
+
+            AssetDatabase.AddObjectToAsset(xrGeneralSettings, xrsdkTestXrSettingsPath);
+            AssetDatabase.AddObjectToAsset(managerSettings, xrsdkTestXrSettingsPath);
+            AssetDatabase.AddObjectToAsset(loader, xrsdkTestXrSettingsPath);
         }
 
-        private static void EnsureXrGeneralSettingsPathExists(string testXrGeneralSettingsPath)
+        private void EnsureArgumentsNotNull(XRGeneralSettings xrGeneralSettings,
+            XRGeneralSettingsPerBuildTarget buildTargetSettings, XRManagerSettings managerSettings)
+        {
+            EnsureArgumentNotNull(xrGeneralSettings);
+            EnsureArgumentNotNull(buildTargetSettings);
+            EnsureArgumentNotNull(managerSettings);
+        }
+
+        private void EnsureXrGeneralSettingsPathExists(string testXrGeneralSettingsPath)
         {
             var settingsPath = Path.GetDirectoryName(testXrGeneralSettingsPath);
             if (!Directory.Exists(settingsPath))
@@ -126,6 +143,14 @@ namespace com.unity.cliconfigmanager
             {
                 throw new ArgumentNullException(nameof(arg));
             }
+        }
+#else
+        private void ConfigureLegacyVr()
+        {
+            PlayerSettings.virtualRealitySupported = true;
+            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
+            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup,
+                new string[] {platformSettings.XrTarget});
         }
 #endif
 #endif
