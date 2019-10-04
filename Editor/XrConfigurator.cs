@@ -55,6 +55,7 @@ namespace com.unity.cliconfigmanager
             SetupLoader<OculusLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
 #endif
 #if MOCKHMD_SDK
+            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
             SetupLoader<MockHMDLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
 #endif
             
