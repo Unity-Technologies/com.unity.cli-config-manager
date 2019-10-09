@@ -100,6 +100,7 @@ namespace com.unity.cliconfigmanager
             XRManagerSettings managerSettings) where T : XRLoader
         {
             var loader = ScriptableObject.CreateInstance<T>();
+            loader.name = loader.GetType().Name;
 
             if (loader == null)
             {
