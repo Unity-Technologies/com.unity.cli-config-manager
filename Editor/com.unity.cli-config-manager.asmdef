@@ -8,7 +8,9 @@
         "Unity.XR.Management.Editor",
         "Unity.XR.MockHMD"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
@@ -19,12 +21,12 @@
         {
             "name": "com.unity.xr.oculus",
             "expression": "0.0.1",
-            "define": "OCULUS_SDK; XR_SDK"
+            "define": "XR_SDK;OCULUS_SDK"
         },
         {
             "name": "com.unity.xr.mock-hmd",
             "expression": "0.0.1",
-            "define": "MOCKHMD_SDK; XR_SDK"
+            "define": "XR_SDK;MOCKHMD_SDK"
         }
     ],
     "noEngineReferences": false
