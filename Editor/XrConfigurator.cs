@@ -22,7 +22,10 @@ namespace com.unity.cliconfigmanager
 {
     public class XrConfigurator
     {
+#if XR_SDK
         private readonly string xrsdkTestXrSettingsPath = "Assets/XR/Settings/Test Settings.asset";
+#endif
+
         private readonly PlatformSettings platformSettings;
 
         public XrConfigurator(PlatformSettings platformSettings)
