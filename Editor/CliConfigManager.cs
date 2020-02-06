@@ -70,6 +70,8 @@ namespace com.unity.cliconfigmanager
             }
         }
 
+
+
         private void ConfigureIosSettings()
         {
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, string.Format("com.unity3d.{0}", PlayerSettings.productName));
@@ -142,6 +144,15 @@ namespace com.unity.cliconfigmanager
             optionsSet.Add("iosprovisioningprofileid=",
                     "iOS Provisioning Profile ID. Use for deployment and running tests on iOS device.",
                     id => platformSettings.IOsProvisioningProfileId = id);
+            optionsSet.Add("xrsdkrev=",
+                "revision id of the xrsdk being used.",
+                id => platformSettings.XrsdkRevision = id);
+            optionsSet.Add("xrsdkrevdate=",
+                "revision date of the xrsdk being used.",
+                revDate => platformSettings.XrsdkRevisionDate = revDate);
+            optionsSet.Add("xrsdkbranch=",
+                "branch of the xrsdk being used.",
+                xrsdkbranch => platformSettings.XrsdkBranch = xrsdkbranch);
             return optionsSet;
         }
         

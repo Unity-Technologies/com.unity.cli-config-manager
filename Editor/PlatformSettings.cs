@@ -1,10 +1,12 @@
 ﻿#if OCULUS_SDK
 using Unity.XR.Oculus;
 #endif
-
+using System;
+using System.Linq;
 using com.unity.xr.test.runtimesettings;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.PackageManager;
 #endif
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -37,9 +39,14 @@ namespace com.unity.cliconfigmanager
         public string AppleDeveloperTeamId;
         public string IOsProvisioningProfileId;
         public ColorSpace ColorSpace = ColorSpace.Gamma;
+        public string XrsdkRevision;
+        public string XrsdkRevisionDate;
+        public string XrsdkBranch;
 
         public string SimulationMode;
         private readonly string ResourceDir = "Assets/Resources";
+        private readonly string xrManagementPackage = "com.unity.xr.management";
+        private readonly string oculusXrSdkPackage = "com.unity.xr.oculus";
 
         public void SerializeToAsset()
         {
@@ -51,13 +58,62 @@ namespace com.unity.cliconfigmanager
             settingsAsset.GraphicsJobs = GraphicsJobs;
             settingsAsset.ColorSpace = ColorSpace.ToString();
             settingsAsset.EnabledXrTarget = XrTarget;
+            settingsAsset.XrsdkRevision = GetOculusXrSdkPackageRevision();
+            settingsAsset.XrManagementRevision = GetXrManagementPackageRevision();
+
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
             settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid.ToString();
+#if OCULUS_SDK_PERF
+            settingsAsset.PluginVersion = string.Format("OculusPluginVersion|{0}", OculusStats.PluginVersion);
+#endif
 #else
             settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath).ToString();
 #endif
             CreateAndSaveCurrentSettingsAsset(settingsAsset);
+        }
+
+        public string GetXrManagementPackageRevision()
+        {
+            string packageRevision = string.Empty;
+
+            var listRequest = Client.List(true);
+            while (!listRequest.IsCompleted)
+            {
+            }
+
+            if (listRequest.Result.Any(r => r.name.Equals(xrManagementPackage)))
+            {
+                var xrManagementPckg =
+                    listRequest.Result.First(r => r.name.Equals(xrManagementPackage));
+
+                var revision = xrManagementPckg.repository.revision;
+                var version = xrManagementPckg.version;
+                packageRevision = string.Format("{0}|{1}|{2}", xrManagementPackage, version, revision);
+            }
+
+            return packageRevision;
+        }
+
+        public string GetOculusXrSdkPackageRevision()
+        {
+            string packageRevision = String.Empty;
+
+            var listRequest = Client.List(true);
+            while (!listRequest.IsCompleted)
+            {
+            }
+
+            if (listRequest.Result.Any(r => r.name.Equals(oculusXrSdkPackage)))
+            {
+                var oculusXrsdkPckg =
+                    listRequest.Result.First(r => r.name.Equals(oculusXrSdkPackage));
+
+                var version = oculusXrsdkPckg.version;
+                packageRevision = string.Format("{0}|{1}|{2}|{3}|{4}", oculusXrSdkPackage, version, XrsdkRevision, XrsdkRevisionDate, XrsdkBranch);
+            }
+
+            return packageRevision;
         }
 
         private XRSettings.StereoRenderingMode GetXrStereoRenderingPathMapping(StereoRenderingPath stereoRenderingPath)
