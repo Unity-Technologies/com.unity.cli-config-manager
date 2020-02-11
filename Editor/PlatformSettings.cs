@@ -2,7 +2,10 @@
 using Unity.XR.Oculus;
 #endif
 using System;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using com.unity.xr.test.runtimesettings;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -10,9 +13,11 @@ using UnityEditor.PackageManager;
 #endif
 using UnityEngine;
 using UnityEngine.Rendering;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 #if ENABLE_VR
 using UnityEngine.XR;
 #endif
+
 
 namespace com.unity.cliconfigmanager
 {
@@ -44,9 +49,15 @@ namespace com.unity.cliconfigmanager
         public string XrsdkBranch;
 
         public string SimulationMode;
-        private readonly string ResourceDir = "Assets/Resources";
-        private readonly string xrManagementPackage = "com.unity.xr.management";
-        private readonly string oculusXrSdkPackage = "com.unity.xr.oculus";
+        private readonly string resourceDir = "Assets/Resources";
+        private readonly string xrManagementPackageName = "com.unity.xr.management";
+        private readonly string oculusXrSdkPackageName = "com.unity.xr.oculus";
+
+        private readonly Regex revisionValueRegex = new Regex("\"revision\": \"([a-f0-9]*)\"",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex majorMinorVersionValueRegex = new Regex("([0-9]*\\.[0-9]*\\.)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
 
         public void SerializeToAsset()
         {
@@ -58,8 +69,8 @@ namespace com.unity.cliconfigmanager
             settingsAsset.GraphicsJobs = GraphicsJobs;
             settingsAsset.ColorSpace = ColorSpace.ToString();
             settingsAsset.EnabledXrTarget = XrTarget;
-            settingsAsset.XrsdkRevision = GetOculusXrSdkPackageRevision();
-            settingsAsset.XrManagementRevision = GetXrManagementPackageRevision();
+            settingsAsset.XrsdkRevision = GetOculusXrSdkPackageVersionInfo();
+            settingsAsset.XrManagementRevision = GetXrManagementPackageVersionInfo();
 
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
@@ -73,7 +84,7 @@ namespace com.unity.cliconfigmanager
             CreateAndSaveCurrentSettingsAsset(settingsAsset);
         }
 
-        public string GetXrManagementPackageRevision()
+        private string GetXrManagementPackageVersionInfo()
         {
             string packageRevision = string.Empty;
 
@@ -82,41 +93,103 @@ namespace com.unity.cliconfigmanager
             {
             }
 
-            if (listRequest.Result.Any(r => r.name.Equals(xrManagementPackage)))
+            if (listRequest.Result.Any(r => r.name.Equals(xrManagementPackageName)))
             {
                 var xrManagementPckg =
-                    listRequest.Result.First(r => r.name.Equals(xrManagementPackage));
+                    listRequest.Result.First(r => r.name.Equals(xrManagementPackageName));
 #if UNITY_2020_1_OR_NEWER
                 var revision = xrManagementPckg.repository.revision;
 #else
-                var revision = "unavailable";
+                // The xrManagementPckg.repository object was introduced in a version of 2020.1.
+                // Prior to this, we have to parse the package.json file to get the revision
+
+                var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
 #endif
                 var version = xrManagementPckg.version;
-                packageRevision = string.Format("{0}|{1}|{2}", xrManagementPackage, version, revision);
+                packageRevision = string.Format("{0}|{1}|{2}", xrManagementPackageName, version, revision);
             }
 
             return packageRevision;
         }
 
-        public string GetOculusXrSdkPackageRevision()
+        private string GetOculusXrSdkPackageVersionInfo()
         {
-            string packageRevision = String.Empty;
+            string packageRevision = string.Empty;
 
             var listRequest = Client.List(true);
             while (!listRequest.IsCompleted)
             {
             }
 
-            if (listRequest.Result.Any(r => r.name.Equals(oculusXrSdkPackage)))
+            if (listRequest.Result.Any(r => r.name.Equals(oculusXrSdkPackageName)))
             {
                 var oculusXrsdkPckg =
-                    listRequest.Result.First(r => r.name.Equals(oculusXrSdkPackage));
+                    listRequest.Result.First(r => r.name.Equals(oculusXrSdkPackageName));
 
                 var version = oculusXrsdkPckg.version;
-                packageRevision = string.Format("{0}|{1}|{2}|{3}|{4}", oculusXrSdkPackage, version, XrsdkRevision, XrsdkRevisionDate, XrsdkBranch);
+
+                // if XrsdkRevision is empty, then it wasn't passed in on the command line (which is
+                // usually going to be the case if we're running in tests at the PR level for Xrsdk package).
+                // In this case, we most likely are using a released package reference, so let's try to get
+                // the revision from the package.json.
+                if (string.IsNullOrEmpty(XrsdkRevision))
+                {
+                    XrsdkRevision = TryGetRevisionFromPackageJson(oculusXrSdkPackageName) ?? "unavailable";
+                }
+
+                // if XrsdkRevisionDate is empty, then it wasn't passed in on the command line (which is
+                // usually going to be the case if we're running in tests at the PR level for Xrsdk package).
+                // In this case, we most likely are using a released package reference, so let's try to get
+                // the revision date from the package manager api instead.
+                if (string.IsNullOrEmpty(XrsdkRevisionDate))
+                {
+                    TryGetXrsdkRevisionDate(oculusXrsdkPckg);
+                }
+
+                // if XrsdkBranch is empty, then it wasn't passed in on the command line (which is
+                // usually going to be the case if we're running in tests at the PR level for Xrsdk package).
+                // In this case, we most likely are using a released package reference, so let's try to infer
+                // the branch from the major.minor version of the package via the package manager API
+                if (string.IsNullOrEmpty(XrsdkBranch))
+                {
+                    TryGetXrsdkBranch(oculusXrsdkPckg);
+                }
+                packageRevision = string.Format(
+                    "{0}|{1}|{2}|{3}|{4}", 
+                    oculusXrSdkPackageName, 
+                    version, 
+                    XrsdkRevision, 
+                    XrsdkRevisionDate, 
+                    XrsdkBranch);
             }
 
             return packageRevision;
+        }
+
+        private void TryGetXrsdkBranch(PackageInfo oculusXrsdkPckg)
+        {
+            var matches = majorMinorVersionValueRegex.Matches(oculusXrsdkPckg.version);
+            XrsdkBranch = matches.Count > 0 ? string.Concat(matches[0].Groups[0].Value, "x") : "release";
+        }
+
+        private void TryGetXrsdkRevisionDate(PackageInfo oculusXrsdkPckg)
+        {
+            XrsdkRevisionDate = 
+                oculusXrsdkPckg.datePublished != null ? 
+                    ((DateTime) oculusXrsdkPckg.datePublished).ToString("s", DateTimeFormatInfo.InvariantInfo) : "unavailable";
+        }
+
+        private string TryGetRevisionFromPackageJson(string packageName)
+        {
+            string revision = null;
+            var packageAsString = File.ReadAllText(string.Format("Packages/{0}/package.json",packageName));
+            var matches = revisionValueRegex.Matches(packageAsString);
+            if (matches.Count > 0)
+            {
+                revision = matches[0].Groups[1].Value;
+            }
+
+            return revision;
         }
 
         private XRSettings.StereoRenderingMode GetXrStereoRenderingPathMapping(StereoRenderingPath stereoRenderingPath)
@@ -136,12 +209,12 @@ namespace com.unity.cliconfigmanager
 
         private void CreateAndSaveCurrentSettingsAsset(CurrentSettings settingsAsset)
         {
-            if (!System.IO.Directory.Exists(ResourceDir))
+            if (!System.IO.Directory.Exists(resourceDir))
             {
-                System.IO.Directory.CreateDirectory(ResourceDir);
+                System.IO.Directory.CreateDirectory(resourceDir);
             }
 
-            AssetDatabase.CreateAsset(settingsAsset, ResourceDir + "/settings.asset");
+            AssetDatabase.CreateAsset(settingsAsset, resourceDir + "/settings.asset");
             AssetDatabase.SaveAssets();
         }
 #endif

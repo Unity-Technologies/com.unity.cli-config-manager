@@ -6,7 +6,6 @@
         "Unity.XR.Oculus.Editor",
         "Unity.XR.Management",
         "Unity.XR.Management.Editor",
-        "Unity.XR.MockHMD",
         "com.unity.xr.oculusperformanceutility"
     ],
     "includePlatforms": [
