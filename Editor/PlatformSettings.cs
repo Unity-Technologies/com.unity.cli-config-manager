@@ -47,8 +47,10 @@ namespace com.unity.cliconfigmanager
         public string XrsdkRevision;
         public string XrsdkRevisionDate;
         public string XrsdkBranch;
-
+        public string DeviceRuntimeVersion;
         public string SimulationMode;
+        public string Username;
+
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
         private readonly string oculusXrSdkPackageName = "com.unity.xr.oculus";
@@ -71,6 +73,8 @@ namespace com.unity.cliconfigmanager
             settingsAsset.EnabledXrTarget = XrTarget;
             settingsAsset.XrsdkRevision = GetOculusXrSdkPackageVersionInfo();
             settingsAsset.XrManagementRevision = GetXrManagementPackageVersionInfo();
+            settingsAsset.DeviceRuntimeVersion = DeviceRuntimeVersion;
+            settingsAsset.Username = Username = Environment.UserName;
 
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();

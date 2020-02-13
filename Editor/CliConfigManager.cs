@@ -153,6 +153,9 @@ namespace com.unity.cliconfigmanager
             optionsSet.Add("xrsdkbranch=",
                 "branch of the xrsdk being used.",
                 xrsdkbranch => platformSettings.XrsdkBranch = xrsdkbranch);
+            optionsSet.Add("deviceruntimeversion=",
+                "runtime version of the device we're running on.",
+                deviceruntime => platformSettings.DeviceRuntimeVersion = string.Format("deviceruntimeversion|{0}",deviceruntime));
             return optionsSet;
         }
         
