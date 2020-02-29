@@ -101,14 +101,8 @@ namespace com.unity.cliconfigmanager
             {
                 var xrManagementPckg =
                     listRequest.Result.First(r => r.name.Equals(xrManagementPackageName));
-#if UNITY_2020_1_OR_NEWER
-                var revision = xrManagementPckg.repository.revision;
-#else
-                // The xrManagementPckg.repository object was introduced in a version of 2020.1.
-                // Prior to this, we have to parse the package.json file to get the revision
 
                 var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
-#endif
                 var version = xrManagementPckg.version;
                 packageRevision = string.Format("{0}|{1}|{2}", xrManagementPackageName, version, revision);
             }
