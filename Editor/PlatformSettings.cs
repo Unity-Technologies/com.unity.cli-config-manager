@@ -50,6 +50,7 @@ namespace com.unity.cliconfigmanager
         public string DeviceRuntimeVersion;
         public string SimulationMode;
         public string Username;
+        public string RenderPipeline;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
@@ -75,6 +76,8 @@ namespace com.unity.cliconfigmanager
             settingsAsset.XrManagementRevision = GetXrManagementPackageVersionInfo();
             settingsAsset.DeviceRuntimeVersion = DeviceRuntimeVersion;
             settingsAsset.Username = Username = Environment.UserName;
+            settingsAsset.RenderPipeline = RenderPipeline =
+                $"renderpipeline|{(GraphicsSettings.renderPipelineAsset != null ? GraphicsSettings.renderPipelineAsset.name : "BuiltInRenderer")}";
 
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
