@@ -156,6 +156,9 @@ namespace com.unity.cliconfigmanager
             optionsSet.Add("deviceruntimeversion=",
                 "runtime version of the device we're running on.",
                 deviceruntime => platformSettings.DeviceRuntimeVersion = string.Format("deviceruntimeversion|{0}",deviceruntime));
+            optionsSet.Add("ffrlevel=",
+                "ffr level we're running at",
+                ffrlevel => platformSettings.FfrLevel = string.Format("ffrlevel|{0}", ffrlevel));
             return optionsSet;
         }
         

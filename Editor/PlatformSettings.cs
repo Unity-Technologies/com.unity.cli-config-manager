@@ -10,6 +10,7 @@ using com.unity.xr.test.runtimesettings;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.PackageManager;
+using UnityEngine.Rendering.Universal;
 #endif
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -51,6 +52,7 @@ namespace com.unity.cliconfigmanager
         public string SimulationMode;
         public string Username;
         public string RenderPipeline;
+        public string FfrLevel;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
@@ -78,6 +80,10 @@ namespace com.unity.cliconfigmanager
             settingsAsset.Username = Username = Environment.UserName;
             settingsAsset.RenderPipeline = RenderPipeline =
                 $"renderpipeline|{(GraphicsSettings.renderPipelineAsset != null ? GraphicsSettings.renderPipelineAsset.name : "BuiltInRenderer")}";
+            settingsAsset.AntiAliasing = GraphicsSettings.renderPipelineAsset != null
+                ? ((UniversalRenderPipelineAsset) GraphicsSettings.renderPipelineAsset).msaaSampleCount
+                : QualitySettings.antiAliasing;
+            settingsAsset.FfrLevel = FfrLevel;
 
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
@@ -107,7 +113,7 @@ namespace com.unity.cliconfigmanager
 
                 var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
                 var version = xrManagementPckg.version;
-                packageRevision = string.Format("{0}|{1}|{2}", xrManagementPackageName, version, revision);
+                packageRevision = string.Format("XrManagementPackageName|{0}|XrManagementVersion|{1}|XrManagementRevision|{2}", xrManagementPackageName, version, revision);
             }
 
             return packageRevision;
@@ -156,7 +162,7 @@ namespace com.unity.cliconfigmanager
                     TryGetXrsdkBranch(oculusXrsdkPckg);
                 }
                 packageRevision = string.Format(
-                    "{0}|{1}|{2}|{3}|{4}", 
+                    "XrSdkName|{0}|XrSdkVersion|{1}|XrSdkRevision|{2}|XrSdkRevisionDate|{3}|XrSdkBranch|{4}", 
                     oculusXrSdkPackageName, 
                     version, 
                     XrsdkRevision, 

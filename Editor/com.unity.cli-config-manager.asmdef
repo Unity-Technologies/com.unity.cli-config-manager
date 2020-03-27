@@ -7,7 +7,8 @@
         "Unity.XR.Management",
         "Unity.XR.Management.Editor",
         "com.unity.xr.oculusperformanceutility",
-        "Unity.XR.MockHMD"
+        "Unity.XR.MockHMD",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
