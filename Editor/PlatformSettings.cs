@@ -52,6 +52,7 @@ namespace com.unity.cliconfigmanager
         public string SimulationMode;
         public string Username;
         public string RenderPipeline;
+        public string FfrLevel;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
@@ -82,6 +83,7 @@ namespace com.unity.cliconfigmanager
             settingsAsset.AntiAliasing = GraphicsSettings.renderPipelineAsset != null
                 ? ((UniversalRenderPipelineAsset) GraphicsSettings.renderPipelineAsset).msaaSampleCount
                 : QualitySettings.antiAliasing;
+            settingsAsset.FfrLevel = FfrLevel;
 
 #if OCULUS_SDK
             settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
