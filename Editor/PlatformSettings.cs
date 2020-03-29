@@ -148,7 +148,7 @@ namespace com.unity.cliconfigmanager
                 var perfTestsPckg =
                     listRequest.Result.First(r => r.name.Equals(perfTestsPackageName));
 
-                var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
+                var revision = TryGetRevisionFromPackageJson(perfTestsPackageName) ?? "unavailable";
                 var version = perfTestsPckg.version;
                 packageRevision = string.Format("PerfTestsPackageName|{0}|PerfTestsVersion|{1}|PerfTestsRevision|{2}", perfTestsPackageName, version, revision);
             }
