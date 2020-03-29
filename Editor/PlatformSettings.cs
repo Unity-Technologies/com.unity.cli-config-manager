@@ -10,7 +10,9 @@ using com.unity.xr.test.runtimesettings;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.PackageManager;
+#if URP
 using UnityEngine.Rendering.Universal;
+#endif
 #endif
 using UnityEngine;
 using UnityEngine.Rendering;
