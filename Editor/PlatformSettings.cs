@@ -85,9 +85,14 @@ namespace com.unity.cliconfigmanager
             settingsAsset.Username = Username = Environment.UserName;
             settingsAsset.RenderPipeline = RenderPipeline =
                 $"renderpipeline|{(GraphicsSettings.renderPipelineAsset != null ? GraphicsSettings.renderPipelineAsset.name : "BuiltInRenderer")}";
+
+#if URP
             settingsAsset.AntiAliasing = GraphicsSettings.renderPipelineAsset != null
                 ? ((UniversalRenderPipelineAsset) GraphicsSettings.renderPipelineAsset).msaaSampleCount
                 : QualitySettings.antiAliasing;
+#else
+            settingsAsset.AntiAliasing = QualitySettings.antiAliasing;
+#endif
             settingsAsset.FfrLevel = FfrLevel;
             settingsAsset.TestsRevision = TestsRevision;
             settingsAsset.TestsRevisionDate = TestsRevisionDate;
