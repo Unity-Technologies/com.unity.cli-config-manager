@@ -48,6 +48,9 @@ namespace com.unity.cliconfigmanager
         public string XrsdkRevision;
         public string XrsdkRevisionDate;
         public string XrsdkBranch;
+        public string TestsRevision;
+        public string TestsRevisionDate;
+        public string TestsBranch;
         public string DeviceRuntimeVersion;
         public string SimulationMode;
         public string Username;
@@ -56,6 +59,7 @@ namespace com.unity.cliconfigmanager
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
+        private readonly string perfTestsPackageName = "xr.sdk.oculus.performancetests";
         private readonly string oculusXrSdkPackageName = "com.unity.xr.oculus";
 
         private readonly Regex revisionValueRegex = new Regex("\"revision\": \"([a-f0-9]*)\"",
@@ -76,6 +80,7 @@ namespace com.unity.cliconfigmanager
             settingsAsset.EnabledXrTarget = XrTarget;
             settingsAsset.XrsdkRevision = GetOculusXrSdkPackageVersionInfo();
             settingsAsset.XrManagementRevision = GetXrManagementPackageVersionInfo();
+            settingsAsset.PerfTestsPackageRevision = GetPerfTestsPackageVersionInfo();
             settingsAsset.DeviceRuntimeVersion = DeviceRuntimeVersion;
             settingsAsset.Username = Username = Environment.UserName;
             settingsAsset.RenderPipeline = RenderPipeline =
@@ -84,9 +89,12 @@ namespace com.unity.cliconfigmanager
                 ? ((UniversalRenderPipelineAsset) GraphicsSettings.renderPipelineAsset).msaaSampleCount
                 : QualitySettings.antiAliasing;
             settingsAsset.FfrLevel = FfrLevel;
+            settingsAsset.TestsRevision = TestsRevision;
+            settingsAsset.TestsRevisionDate = TestsRevisionDate;
+            settingsAsset.TestsBranch = TestsBranch;
 
 #if OCULUS_SDK
-            settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
+        settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
             settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid.ToString();
 #if OCULUS_SDK_PERF
             settingsAsset.PluginVersion = string.Format("OculusPluginVersion|{0}", OculusStats.PluginVersion);
@@ -114,6 +122,28 @@ namespace com.unity.cliconfigmanager
                 var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
                 var version = xrManagementPckg.version;
                 packageRevision = string.Format("XrManagementPackageName|{0}|XrManagementVersion|{1}|XrManagementRevision|{2}", xrManagementPackageName, version, revision);
+            }
+
+            return packageRevision;
+        }
+
+        private string GetPerfTestsPackageVersionInfo()
+        {
+            string packageRevision = string.Empty;
+
+            var listRequest = Client.List(true);
+            while (!listRequest.IsCompleted)
+            {
+            }
+
+            if (listRequest.Result.Any(r => r.name.Equals(perfTestsPackageName)))
+            {
+                var perfTestsPckg =
+                    listRequest.Result.First(r => r.name.Equals(perfTestsPackageName));
+
+                var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
+                var version = perfTestsPckg.version;
+                packageRevision = string.Format("PerfTestsPackageName|{0}|PerfTestsVersion|{1}|PerfTestsRevision|{2}", perfTestsPackageName, version, revision);
             }
 
             return packageRevision;

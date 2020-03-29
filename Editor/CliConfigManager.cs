@@ -159,6 +159,15 @@ namespace com.unity.cliconfigmanager
             optionsSet.Add("ffrlevel=",
                 "ffr level we're running at",
                 ffrlevel => platformSettings.FfrLevel = string.Format("ffrlevel|{0}", ffrlevel));
+            optionsSet.Add("testsrev=",
+                "revision id of the tests being used.",
+                id => platformSettings.TestsRevision = string.Format("testsrev|{0}", id));
+            optionsSet.Add("testsrevdate=",
+                "revision date of the tests being used.",
+                revDate => platformSettings.TestsRevisionDate = string.Format("testsrevdate|{0}", revDate));
+            optionsSet.Add("testsbranch=",
+                "branch of the tests repo being used.",
+                testsbranch => platformSettings.TestsBranch = string.Format("testsbranch|{0}", testsbranch));
             return optionsSet;
         }
         
