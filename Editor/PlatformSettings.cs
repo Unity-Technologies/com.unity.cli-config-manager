@@ -218,9 +218,11 @@ namespace com.unity.cliconfigmanager
 
         private void TryGetXrsdkRevisionDate(PackageInfo oculusXrsdkPckg)
         {
+#if OCULUS_SDK
             XrsdkRevisionDate = 
                 oculusXrsdkPckg.datePublished != null ? 
                     ((DateTime) oculusXrsdkPckg.datePublished).ToString("s", DateTimeFormatInfo.InvariantInfo) : "unavailable";
+#endif
         }
 
         private string TryGetRevisionFromPackageJson(string packageName)
@@ -262,5 +264,5 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.SaveAssets();
         }
 #endif
+        }
     }
-}
