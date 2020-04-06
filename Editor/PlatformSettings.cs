@@ -58,7 +58,7 @@ namespace com.unity.cliconfigmanager
         public string Username;
         public string RenderPipeline;
         public string FfrLevel;
-        public AndroidArchitecture? AndroidTargetArchitecture;
+        public AndroidArchitecture AndroidTargetArchitecture;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";

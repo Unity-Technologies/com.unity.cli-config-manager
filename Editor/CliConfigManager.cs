@@ -102,7 +102,7 @@ namespace com.unity.cliconfigmanager
             EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
             PlayerSettings.Android.minSdkVersion = platformSettings.MinimumAndroidSdkVersion;
             PlayerSettings.Android.targetSdkVersion = platformSettings.TargetAndroidSdkVersion;
-            PlayerSettings.Android.targetArchitectures = (AndroidArchitecture) platformSettings.AndroidTargetArchitecture;
+            PlayerSettings.Android.targetArchitectures = platformSettings.AndroidTargetArchitecture;
         }
 
         private OptionSet DefineOptionSet()
@@ -217,14 +217,9 @@ namespace com.unity.cliconfigmanager
             {
                 platformSettings.ScriptingImplementation = ScriptingImplementation.Mono2x;
             }
-            else if (sb.Equals("il2cpp"))
-            {
-                platformSettings.ScriptingImplementation = ScriptingImplementation.IL2CPP;
-            }
             else
             {
-                throw new ArgumentException(string.Format(
-                    "Unrecognized scripting backend {0}. Valid options are Mono or IL2CPP", scriptingBackend));
+                platformSettings.ScriptingImplementation = ScriptingImplementation.IL2CPP;
             }
         }
 #endif
