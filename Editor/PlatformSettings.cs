@@ -58,6 +58,7 @@ namespace com.unity.cliconfigmanager
         public string Username;
         public string RenderPipeline;
         public string FfrLevel;
+        public AndroidArchitecture? AndroidTargetArchitecture;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
@@ -85,6 +86,11 @@ namespace com.unity.cliconfigmanager
             settingsAsset.PerfTestsPackageRevision = GetPerfTestsPackageVersionInfo();
             settingsAsset.DeviceRuntimeVersion = DeviceRuntimeVersion;
             settingsAsset.Username = Username = Environment.UserName;
+            settingsAsset.FfrLevel = FfrLevel;
+            settingsAsset.TestsRevision = TestsRevision;
+            settingsAsset.TestsRevisionDate = TestsRevisionDate;
+            settingsAsset.TestsBranch = TestsBranch;
+            settingsAsset.AndroidTargetArchitecture = string.Format("AndroidTargetArchitecture|{0}", AndroidTargetArchitecture.ToString());
             settingsAsset.RenderPipeline = RenderPipeline =
                 $"renderpipeline|{(GraphicsSettings.renderPipelineAsset != null ? GraphicsSettings.renderPipelineAsset.name : "BuiltInRenderer")}";
 
@@ -95,10 +101,7 @@ namespace com.unity.cliconfigmanager
 #else
             settingsAsset.AntiAliasing = QualitySettings.antiAliasing;
 #endif
-            settingsAsset.FfrLevel = FfrLevel;
-            settingsAsset.TestsRevision = TestsRevision;
-            settingsAsset.TestsRevisionDate = TestsRevisionDate;
-            settingsAsset.TestsBranch = TestsBranch;
+            
 
 #if OCULUS_SDK
         settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
@@ -264,5 +267,5 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.SaveAssets();
         }
 #endif
-        }
     }
+}

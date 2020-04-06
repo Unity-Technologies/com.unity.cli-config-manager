@@ -102,6 +102,7 @@ namespace com.unity.cliconfigmanager
             EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
             PlayerSettings.Android.minSdkVersion = platformSettings.MinimumAndroidSdkVersion;
             PlayerSettings.Android.targetSdkVersion = platformSettings.TargetAndroidSdkVersion;
+            PlayerSettings.Android.targetArchitectures = (AndroidArchitecture) platformSettings.AndroidTargetArchitecture;
         }
 
         private OptionSet DefineOptionSet()
@@ -168,6 +169,9 @@ namespace com.unity.cliconfigmanager
             optionsSet.Add("testsbranch=",
                 "branch of the tests repo being used.",
                 testsbranch => platformSettings.TestsBranch = string.Format("testsbranch|{0}", testsbranch));
+            optionsSet.Add("androidtargetarchitecture=",
+                "Android Target Architecture to use.",
+                androidtargetarchitecture => platformSettings.AndroidTargetArchitecture = androidtargetarchitecture != null ? TryParse<AndroidArchitecture>(androidtargetarchitecture) : AndroidArchitecture.ARM64);
             return optionsSet;
         }
         
