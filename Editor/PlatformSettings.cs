@@ -43,7 +43,7 @@ namespace com.unity.cliconfigmanager
         public bool GraphicsJobs;
         public AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
         public AndroidSdkVersions TargetAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
-        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.Mono2x;
+        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.IL2CPP;
         public string AppleDeveloperTeamId;
         public string IOsProvisioningProfileId;
         public ColorSpace ColorSpace = ColorSpace.Gamma;
@@ -58,7 +58,7 @@ namespace com.unity.cliconfigmanager
         public string Username;
         public string RenderPipeline;
         public string FfrLevel;
-        public AndroidArchitecture AndroidTargetArchitecture;
+        public AndroidArchitecture AndroidTargetArchitecture = AndroidArchitecture.ARM64;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";

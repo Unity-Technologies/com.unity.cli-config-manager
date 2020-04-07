@@ -217,10 +217,6 @@ namespace com.unity.cliconfigmanager
             {
                 platformSettings.ScriptingImplementation = ScriptingImplementation.Mono2x;
             }
-            else
-            {
-                platformSettings.ScriptingImplementation = ScriptingImplementation.IL2CPP;
-            }
         }
 #endif
     }
