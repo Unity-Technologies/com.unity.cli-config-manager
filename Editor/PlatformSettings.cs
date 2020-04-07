@@ -43,7 +43,7 @@ namespace com.unity.cliconfigmanager
         public bool GraphicsJobs;
         public AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
         public AndroidSdkVersions TargetAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
-        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.Mono2x;
+        public ScriptingImplementation ScriptingImplementation = ScriptingImplementation.IL2CPP;
         public string AppleDeveloperTeamId;
         public string IOsProvisioningProfileId;
         public ColorSpace ColorSpace = ColorSpace.Gamma;
@@ -58,6 +58,7 @@ namespace com.unity.cliconfigmanager
         public string Username;
         public string RenderPipeline;
         public string FfrLevel;
+        public AndroidArchitecture AndroidTargetArchitecture = AndroidArchitecture.ARM64;
 
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
@@ -85,6 +86,11 @@ namespace com.unity.cliconfigmanager
             settingsAsset.PerfTestsPackageRevision = GetPerfTestsPackageVersionInfo();
             settingsAsset.DeviceRuntimeVersion = DeviceRuntimeVersion;
             settingsAsset.Username = Username = Environment.UserName;
+            settingsAsset.FfrLevel = FfrLevel;
+            settingsAsset.TestsRevision = TestsRevision;
+            settingsAsset.TestsRevisionDate = TestsRevisionDate;
+            settingsAsset.TestsBranch = TestsBranch;
+            settingsAsset.AndroidTargetArchitecture = string.Format("AndroidTargetArchitecture|{0}", AndroidTargetArchitecture.ToString());
             settingsAsset.RenderPipeline = RenderPipeline =
                 $"renderpipeline|{(GraphicsSettings.renderPipelineAsset != null ? GraphicsSettings.renderPipelineAsset.name : "BuiltInRenderer")}";
 
@@ -95,10 +101,7 @@ namespace com.unity.cliconfigmanager
 #else
             settingsAsset.AntiAliasing = QualitySettings.antiAliasing;
 #endif
-            settingsAsset.FfrLevel = FfrLevel;
-            settingsAsset.TestsRevision = TestsRevision;
-            settingsAsset.TestsRevisionDate = TestsRevisionDate;
-            settingsAsset.TestsBranch = TestsBranch;
+            
 
 #if OCULUS_SDK
         settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
@@ -264,5 +267,5 @@ namespace com.unity.cliconfigmanager
             AssetDatabase.SaveAssets();
         }
 #endif
-        }
     }
+}
