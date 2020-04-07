@@ -102,6 +102,24 @@ namespace com.unity.cliconfigmanager
             EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
             PlayerSettings.Android.minSdkVersion = platformSettings.MinimumAndroidSdkVersion;
             PlayerSettings.Android.targetSdkVersion = platformSettings.TargetAndroidSdkVersion;
+
+            // If the user has specified AndroidArchitecture.ARMv7, but not specified ScriptingImplementation.Mono2x, or has incorrectly specified ScriptingImplementation.IL2CPP (not supported
+            // with mono), then set to AndroidArchitecture.ARMv7 so we're in a compatible configuration state.
+            if (platformSettings.AndroidTargetArchitecture == AndroidArchitecture.ARMv7 &&
+                platformSettings.ScriptingImplementation != ScriptingImplementation.Mono2x)
+            {
+                platformSettings.ScriptingImplementation = ScriptingImplementation.Mono2x;
+                PlayerSettings.SetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup,
+                    platformSettings.ScriptingImplementation);
+            }
+
+            // If the user has specified mono scripting backend, but not specified AndroidArchitecture.ARMv7, or has incorrectly specified AndroidArchitecture.ARM64 (not supported
+            // with mono), then set to AndroidArchitecture.ARMv7 so we're in a compatible configuration state.
+            if (platformSettings.ScriptingImplementation == ScriptingImplementation.Mono2x &&
+                platformSettings.AndroidTargetArchitecture != AndroidArchitecture.ARMv7)
+            {
+                platformSettings.AndroidTargetArchitecture = AndroidArchitecture.ARMv7;
+            }
             PlayerSettings.Android.targetArchitectures = platformSettings.AndroidTargetArchitecture;
         }
 
@@ -171,7 +189,7 @@ namespace com.unity.cliconfigmanager
                 testsbranch => platformSettings.TestsBranch = string.Format("testsbranch|{0}", testsbranch));
             optionsSet.Add("androidtargetarchitecture=",
                 "Android Target Architecture to use.",
-                androidtargetarchitecture => platformSettings.AndroidTargetArchitecture = androidtargetarchitecture != null ? TryParse<AndroidArchitecture>(androidtargetarchitecture) : AndroidArchitecture.ARM64);
+                androidtargetarchitecture => platformSettings.AndroidTargetArchitecture = TryParse<AndroidArchitecture>(androidtargetarchitecture));
             return optionsSet;
         }
         
