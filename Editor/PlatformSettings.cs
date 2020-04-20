@@ -63,7 +63,9 @@ namespace com.unity.cliconfigmanager
         private readonly string resourceDir = "Assets/Resources";
         private readonly string xrManagementPackageName = "com.unity.xr.management";
         private readonly string perfTestsPackageName = "xr.sdk.oculus.performancetests";
+        private readonly string urpPackageName = "com.unity.render-pipelines.universal";
         private readonly string oculusXrSdkPackageName = "com.unity.xr.oculus";
+        private readonly string hdrpPackageName = "com.unity.testing.hdrp";
 
         private readonly Regex revisionValueRegex = new Regex("\"revision\": \"([a-f0-9]*)\"",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -83,6 +85,8 @@ namespace com.unity.cliconfigmanager
             settingsAsset.EnabledXrTarget = XrTarget;
             settingsAsset.XrsdkRevision = GetOculusXrSdkPackageVersionInfo();
             settingsAsset.XrManagementRevision = GetXrManagementPackageVersionInfo();
+            settingsAsset.UrpPackageVersionInfo = GetUrpPackageVersionInfo();
+            settingsAsset.HdrpPackageVersionInfo = GetHdrpPackageVersionInfo();
             settingsAsset.PerfTestsPackageRevision = GetPerfTestsPackageVersionInfo();
             settingsAsset.DeviceRuntimeVersion = DeviceRuntimeVersion;
             settingsAsset.Username = Username = Environment.UserName;
@@ -132,6 +136,50 @@ namespace com.unity.cliconfigmanager
                 var revision = TryGetRevisionFromPackageJson(xrManagementPackageName) ?? "unavailable";
                 var version = xrManagementPckg.version;
                 packageRevision = string.Format("XrManagementPackageName|{0}|XrManagementVersion|{1}|XrManagementRevision|{2}", xrManagementPackageName, version, revision);
+            }
+
+            return packageRevision;
+        }
+
+        private string GetUrpPackageVersionInfo()
+        {
+            string packageRevision = string.Empty;
+
+            var listRequest = Client.List(true);
+            while (!listRequest.IsCompleted)
+            {
+            }
+
+            if (listRequest.Result.Any(r => r.name.Equals(urpPackageName)))
+            {
+                var urpPckg =
+                    listRequest.Result.First(r => r.name.Equals(urpPackageName));
+
+                var revision = TryGetRevisionFromPackageJson(urpPackageName) ?? "unavailable";
+                var version = urpPckg.version;
+                packageRevision = string.Format("UrpPackageName|{0}|UrpVersion|{1}|UrpRevision|{2}", urpPackageName, version, revision);
+            }
+
+            return packageRevision;
+        }
+
+        private string GetHdrpPackageVersionInfo()
+        {
+            string packageRevision = string.Empty;
+
+            var listRequest = Client.List(true);
+            while (!listRequest.IsCompleted)
+            {
+            }
+
+            if (listRequest.Result.Any(r => r.name.Equals(hdrpPackageName)))
+            {
+                var urpPckg =
+                    listRequest.Result.First(r => r.name.Equals(hdrpPackageName));
+
+                var revision = TryGetRevisionFromPackageJson(hdrpPackageName) ?? "unavailable";
+                var version = urpPckg.version;
+                packageRevision = string.Format("HdrpPackageName|{0}|HdrpVersion|{1}|HdrpRevision|{2}", hdrpPackageName, version, revision);
             }
 
             return packageRevision;
