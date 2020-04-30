@@ -116,8 +116,13 @@ namespace com.unity.cliconfigmanager
 #if OCULUS_SDK_PERF
             settingsAsset.PluginVersion = string.Format("OculusPluginVersion|{0}", OculusStats.PluginVersion);
 #endif
-#else
+#endif
+#if XR_SDK
             settingsAsset.StereoRenderingMode = StereoRenderingPath;
+#else
+            // legacy xr has different enum for player settings and runtime settings for stereo rendering mode
+            var builtInXrStereoPath = (StereoRenderingPath)Enum.Parse(typeof(StereoRenderingPath), StereoRenderingPath);
+            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(builtInXrStereoPath).ToString();
 #endif
             CreateAndSaveCurrentSettingsAsset(settingsAsset);
         }
@@ -290,6 +295,21 @@ namespace com.unity.cliconfigmanager
             }
 
             return revision;
+        }
+
+        private XRSettings.StereoRenderingMode GetXrStereoRenderingPathMapping(StereoRenderingPath stereoRenderingPath)
+        {
+            switch (stereoRenderingPath)
+            {
+                case UnityEditor.StereoRenderingPath.SinglePass:
+                    return XRSettings.StereoRenderingMode.SinglePass;
+                case UnityEditor.StereoRenderingPath.MultiPass:
+                    return XRSettings.StereoRenderingMode.MultiPass;
+                case UnityEditor.StereoRenderingPath.Instancing:
+                    return XRSettings.StereoRenderingMode.SinglePassInstanced;
+                default:
+                    return XRSettings.StereoRenderingMode.SinglePassMultiview;
+            }
         }
 
         private void CreateAndSaveCurrentSettingsAsset(CurrentSettings settingsAsset)

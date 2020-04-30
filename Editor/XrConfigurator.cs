@@ -195,8 +195,11 @@ namespace com.unity.cliconfigmanager
 #else
         private void ConfigureLegacyVr()
         {
-            PlayerSettings.virtualRealitySupported = true; 
-            
+            PlayerSettings.virtualRealitySupported = true;
+
+            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup
+                (platformSettings.BuildTargetGroup, new string[] { platformSettings.XrTarget });
+
             try
             {
                 PlayerSettings.stereoRenderingPath = (StereoRenderingPath)Enum.Parse(
@@ -207,9 +210,6 @@ namespace com.unity.cliconfigmanager
                 throw new ArgumentException(
                     "Error trying to cast stereo rendering mode cmdline parameter to UnityEditor.StereoRenderingPath type.", e);
             }
-
-            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup,
-                new string[] {platformSettings.XrTarget});
         }
 #endif
 #endif
