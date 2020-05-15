@@ -32,13 +32,7 @@ namespace com.unity.cliconfigmanager
 
         public string XrTarget;
         public GraphicsDeviceType PlayerGraphicsApi;
-
-#if OCULUS_SDK
-        public OculusSettings.StereoRenderingModeDesktop StereoRenderingModeDesktop;
-        public OculusSettings.StereoRenderingModeAndroid StereoRenderingModeAndroid;
-#else
-        public StereoRenderingPath StereoRenderingPath;
-#endif
+        public string StereoRenderingPath;
         public bool MtRendering = true;
         public bool GraphicsJobs;
         public AndroidSdkVersions MinimumAndroidSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
@@ -105,16 +99,30 @@ namespace com.unity.cliconfigmanager
 #else
             settingsAsset.AntiAliasing = QualitySettings.antiAliasing;
 #endif
-            
+
 
 #if OCULUS_SDK
-        settingsAsset.StereoRenderingModeDesktop = StereoRenderingModeDesktop.ToString();
-            settingsAsset.StereoRenderingModeAndroid = StereoRenderingModeAndroid.ToString();
+            // These fields are used by the performance test framework and are an artifact from this class
+            // previously using the provider - specific enums before converting to a cross-platform friendly string
+            if (BuildTarget == BuildTarget.Android)
+            {
+                settingsAsset.StereoRenderingModeAndroid = StereoRenderingPath;
+            }
+            else
+            {
+                settingsAsset.StereoRenderingModeDesktop = StereoRenderingPath;
+            }
+            
 #if OCULUS_SDK_PERF
             settingsAsset.PluginVersion = string.Format("OculusPluginVersion|{0}", OculusStats.PluginVersion);
 #endif
+#endif
+#if XR_SDK
+            settingsAsset.StereoRenderingMode = StereoRenderingPath;
 #else
-            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(StereoRenderingPath).ToString();
+            // legacy xr has different enum for player settings and runtime settings for stereo rendering mode
+            var builtInXrStereoPath = (StereoRenderingPath)Enum.Parse(typeof(StereoRenderingPath), StereoRenderingPath);
+            settingsAsset.StereoRenderingMode = GetXrStereoRenderingPathMapping(builtInXrStereoPath).ToString();
 #endif
             CreateAndSaveCurrentSettingsAsset(settingsAsset);
         }
@@ -293,11 +301,11 @@ namespace com.unity.cliconfigmanager
         {
             switch (stereoRenderingPath)
             {
-                case StereoRenderingPath.SinglePass:
+                case UnityEditor.StereoRenderingPath.SinglePass:
                     return XRSettings.StereoRenderingMode.SinglePass;
-                case StereoRenderingPath.MultiPass:
+                case UnityEditor.StereoRenderingPath.MultiPass:
                     return XRSettings.StereoRenderingMode.MultiPass;
-                case StereoRenderingPath.Instancing:
+                case UnityEditor.StereoRenderingPath.Instancing:
                     return XRSettings.StereoRenderingMode.SinglePassInstanced;
                 default:
                     return XRSettings.StereoRenderingMode.SinglePassMultiview;

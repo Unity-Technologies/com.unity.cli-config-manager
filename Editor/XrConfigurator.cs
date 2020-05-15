@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.IO;
 #if UNITY_EDITOR
 #if XR_SDK
@@ -45,71 +46,113 @@ namespace com.unity.cliconfigmanager
 #if XR_SDK
         private void ConfigureXrSdk()
         {
+#if !UNITY_2020_OR_NEWER
             PlayerSettings.virtualRealitySupported = false;
+#endif
 
             // Create our own test version of xr general settings.
             var xrGeneralSettings = ScriptableObject.CreateInstance<XRGeneralSettings>();
             var managerSettings = ScriptableObject.CreateInstance<XRManagerSettings>();
             var buildTargetSettings = ScriptableObject.CreateInstance<XRGeneralSettingsPerBuildTarget>();
 
-            xrGeneralSettings.Manager = managerSettings;
             EnsureArgumentsNotNull(xrGeneralSettings, buildTargetSettings, managerSettings);
+
+
+            xrGeneralSettings.Manager = managerSettings;
+
 #if OCULUS_SDK
-            SetupLoader<OculusLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
+            if (platformSettings.XrTarget == "OculusXRSDK")
+            {
+                SetupLoader<OculusLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
+
+                var oculusSettings = ScriptableObject.CreateInstance<OculusSettings>();
+
+                if (oculusSettings == null)
+                {
+                    throw new ArgumentNullException(
+                        $"Tried to instantiate an instance of {typeof(OculusSettings).Name} but it is null.");
+                }
+
+                if (platformSettings.BuildTarget == BuildTarget.Android)
+                {
+                    try
+                    {
+                        oculusSettings.m_StereoRenderingModeAndroid = (OculusSettings.StereoRenderingModeAndroid)Enum.Parse(
+                            typeof(OculusSettings.StereoRenderingModeAndroid), platformSettings.StereoRenderingPath);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ArgumentException("Failed to parse stereo rendering mode for Android Oculus XR SDK", e);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        oculusSettings.m_StereoRenderingModeDesktop = (OculusSettings.StereoRenderingModeDesktop)Enum.Parse(
+                            typeof(OculusSettings.StereoRenderingModeDesktop), platformSettings.StereoRenderingPath);
+                    }
+                    catch (Exception e)
+                    {
+
+                        throw new ArgumentException("Failed to parse stereo rendering mode for Desktop Oculus XR SDK.", e);
+                    }
+                }
+
+                AssetDatabase.AddObjectToAsset(oculusSettings, xrsdkTestXrSettingsPath);
+
+                AssetDatabase.SaveAssets();
+
+                EditorBuildSettings.AddConfigObject("Unity.XR.Oculus.Settings", oculusSettings, true); 
+            }
 #endif
+
 #if MOCKHMD_SDK
-            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
-            SetupLoader<MockHMDLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
+            if (platformSettings.XrTarget == "MockHMDXRSDK")
+            {
+                SetupLoader<MockHMDLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
+
+                var mockSettings = ScriptableObject.CreateInstance<MockHMDBuildSettings>();
+
+                if (mockSettings == null)
+                {
+                    throw new ArgumentNullException("Failed to create Mock HMD settings asset.");
+                }
+
+                try
+                {
+                    mockSettings.renderMode = (MockHMDBuildSettings.RenderMode)Enum.Parse(
+                        typeof(MockHMDBuildSettings.RenderMode), platformSettings.StereoRenderingPath);
+                }
+                catch (Exception e)
+                {
+                    throw new ArgumentException("Failed to parse stereo rendering mode for Mock HMD XR SDK", e);
+                }
+
+                AssetDatabase.AddObjectToAsset(mockSettings, xrsdkTestXrSettingsPath);
+
+                AssetDatabase.SaveAssets();
+
+                EditorBuildSettings.AddConfigObject("Unity.XR.MockHMD.Settings", mockSettings, true); 
+            }
 #endif
-            
-#if OCULUS_SDK
-            var settings = ConfigureOculusSettings();
-#endif
-            AssetDatabase.SaveAssets();
-            
+
             EditorBuildSettings.AddConfigObject(XRGeneralSettings.k_SettingsKey, buildTargetSettings, true);
-#if OCULUS_SDK
-            EditorBuildSettings.AddConfigObject("Unity.XR.Oculus.Settings", settings, true);
-#endif
         }
-
-#if OCULUS_SDK
-        private OculusSettings ConfigureOculusSettings()
-        {
-            var settings = ScriptableObject.CreateInstance<OculusSettings>();
-            if (settings == null)
-            {
-                throw new ArgumentNullException(
-                    $"Tried to instantiate an instance of {typeof(OculusSettings).Name} but it is null.");
-            }
-
-            AssetDatabase.AddObjectToAsset(settings, xrsdkTestXrSettingsPath);
-
-            if (platformSettings.BuildTarget == BuildTarget.Android)
-            {
-                settings.m_StereoRenderingModeAndroid = platformSettings.StereoRenderingModeAndroid;
-            }
-            else
-            {
-                settings.m_StereoRenderingModeDesktop = platformSettings.StereoRenderingModeDesktop;
-            }
-
-            return settings;
-        }
-#endif
 
         private void SetupLoader<T>(XRGeneralSettings xrGeneralSettings,
             XRGeneralSettingsPerBuildTarget buildTargetSettings,
             XRManagerSettings managerSettings) where T : XRLoader
         {
             var loader = ScriptableObject.CreateInstance<T>();
-            loader.name = loader.GetType().Name;
 
             if (loader == null)
             {
                 throw new ArgumentNullException(
                     $"Tried to instantiate an instance of {typeof(T).Name}, but it is null.");
             }
+
+            loader.name = loader.GetType().Name;
 
             xrGeneralSettings.Manager.loaders.Add(loader);
 
@@ -153,9 +196,20 @@ namespace com.unity.cliconfigmanager
         private void ConfigureLegacyVr()
         {
             PlayerSettings.virtualRealitySupported = true;
-            PlayerSettings.stereoRenderingPath = platformSettings.StereoRenderingPath;
-            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup(platformSettings.BuildTargetGroup,
-                new string[] {platformSettings.XrTarget});
+
+            UnityEditorInternal.VR.VREditor.SetVREnabledDevicesOnTargetGroup
+                (platformSettings.BuildTargetGroup, new string[] { platformSettings.XrTarget });
+
+            try
+            {
+                PlayerSettings.stereoRenderingPath = (StereoRenderingPath)Enum.Parse(
+                    typeof(StereoRenderingPath), platformSettings.StereoRenderingPath);
+            }
+            catch (System.Exception e)
+            {
+                throw new ArgumentException(
+                    "Error trying to cast stereo rendering mode cmdline parameter to UnityEditor.StereoRenderingPath type.", e);
+            }
         }
 #endif
 #endif

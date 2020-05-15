@@ -2,12 +2,8 @@
 using System;
 #if UNITY_EDITOR
 using UnityEditor;
-#if OCULUS_SDK
-using Unity.XR.Oculus;
-#endif
 #endif
 using System.Text.RegularExpressions;
-
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -25,6 +21,7 @@ namespace com.unity.cliconfigmanager
             ConfigureSettings();
 #endif
         }
+
 #if UNITY_EDITOR
         private void ParseCommandLineArgs()
         {
@@ -70,8 +67,6 @@ namespace com.unity.cliconfigmanager
             }
         }
 
-
-
         private void ConfigureIosSettings()
         {
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, string.Format("com.unity3d.{0}", PlayerSettings.productName));
@@ -83,8 +78,10 @@ namespace com.unity.cliconfigmanager
 
         private void ConfigureCrossplatformSettings()
         {
-			PlayerSettings.virtualRealitySupported = false;
-
+#if !UNITY_2020_OR_NEWER
+            // legacy built in vr settings which are deprecated in 2020.1 and over
+            PlayerSettings.virtualRealitySupported = false;
+#endif
             if (platformSettings.PlayerGraphicsApi != GraphicsDeviceType.Null)
             {
                 PlayerSettings.SetUseDefaultGraphicsAPIs(platformSettings.BuildTarget, false);
@@ -133,18 +130,14 @@ namespace com.unity.cliconfigmanager
                 simMode => platformSettings.SimulationMode = simMode);
             optionsSet.Add("enabledxrtarget|enabledxrtargets=",
                 "XR target to enable in player settings. Values: " +
-                "\r\n\"Oculus\"\r\n\"OpenVR\"\r\n\"cardboard\"\r\n\"daydream\"\r\n\"MockHMD\"\r\n\"OculusXRSDK\"\r\n\"MagicLeapXRSDK\"\r\n\"WindowsMRXRSDK\"",
+                "\r\n\"Oculus\"\r\n\"OpenVR\"\r\n\"cardboard\"\r\n\"daydream\"\r\n\"MockHMD\"\r\n\"OculusXRSDK\"\r\n\"MockHMDXRSDK\"\r\n\"MagicLeapXRSDK\"\r\n\"WindowsMRXRSDK\"",
                 xrTarget => platformSettings.XrTarget = xrTarget);
             optionsSet.Add("playergraphicsapi=", "Graphics API based on GraphicsDeviceType.",
                 graphicsDeviceType =>
                     platformSettings.PlayerGraphicsApi = TryParse<GraphicsDeviceType>(graphicsDeviceType));
             optionsSet.Add("colorspace=", "Linear or Gamma color space.",
                 colorSpace => platformSettings.ColorSpace = TryParse<ColorSpace>(colorSpace));
-#if OCULUS_SDK
-            optionsSet.Add("stereorenderingpath=", "Stereo rendering path to enable. SinglePass is default", TryParseOculusXrSdkSrm);
-#else
-            optionsSet.Add("stereorenderingpath=", "Stereo rendering path to enable. SinglePass is default", TryParseLegacyVrSrm);
-#endif
+            optionsSet.Add("stereorenderingpath=", "Stereo rendering path to enable. SinglePass is default", srm => platformSettings.StereoRenderingPath = srm);
             optionsSet.Add("mtRendering",
                 "Enable or disable multithreaded rendering. Enabled is default. Use option to enable, or use option and append '-' to disable.",
                 option => platformSettings.MtRendering = option != null);
@@ -207,26 +200,6 @@ namespace com.unity.cliconfigmanager
 
             return thisType;
         }
-#if OCULUS_SDK
-        private void TryParseOculusXrSdkSrm(string srm)
-        {
-            if (platformSettings.BuildTarget == BuildTarget.Android)
-            {
-                platformSettings.StereoRenderingModeAndroid = TryParse<OculusSettings.StereoRenderingModeAndroid>(srm);
-            }
-            else
-            {
-                platformSettings.StereoRenderingModeDesktop = TryParse<OculusSettings.StereoRenderingModeDesktop>(srm);
-            }
-        }
-#else
-
-        private void TryParseLegacyVrSrm(string srm)
-        {
-                platformSettings.StereoRenderingPath = TryParse<StereoRenderingPath>(srm);
-        }
-
-#endif
 
         private void ParseScriptingBackend(string scriptingBackend)
         {
