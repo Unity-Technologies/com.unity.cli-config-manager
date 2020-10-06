@@ -4,7 +4,6 @@ using System.IO;
 #if UNITY_EDITOR
 #if XR_SDK
 using UnityEditor.XR.Management;
-using System;
 #endif
 using UnityEditor;
 #endif
@@ -17,6 +16,9 @@ using Unity.XR.Oculus;
 #endif
 #if MOCKHMD_SDK
 using Unity.XR.MockHMD;
+#endif
+#if WMR_SDK
+using UnityEngine.XR.WindowsMR;
 #endif
 
 namespace com.unity.cliconfigmanager
@@ -59,6 +61,27 @@ namespace com.unity.cliconfigmanager
 
 
             xrGeneralSettings.Manager = managerSettings;
+
+#if WMR_SDK
+            if (platformSettings.XrTarget == "WindowsMRXRSDK")
+            {
+                SetupLoader<WindowsMRLoader>(xrGeneralSettings, buildTargetSettings, managerSettings);
+
+                var wmrSettings = ScriptableObject.CreateInstance<WindowsMRSettings>();
+
+                if (wmrSettings == null)
+                {
+                    throw new ArgumentNullException(
+                        $"Tried to instantiate an instance of {typeof(WindowsMRLoader).Name} but it was null.");
+                }
+
+                AssetDatabase.AddObjectToAsset(wmrSettings, xrsdkTestXrSettingsPath);
+
+                AssetDatabase.SaveAssets();
+
+                EditorBuildSettings.AddConfigObject("Unity.XR.WindowsMR.Settings", wmrSettings, true);
+            }
+#endif
 
 #if OCULUS_SDK
             if (platformSettings.XrTarget == "OculusXRSDK")

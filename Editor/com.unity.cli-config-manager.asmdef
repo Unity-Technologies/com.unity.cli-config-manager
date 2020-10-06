@@ -1,14 +1,15 @@
 {
     "name": "com.unity.cli-config-manager",
+    "rootNamespace": "",
     "references": [
         "com.unity.xr.tests.runtimesettings",
         "Unity.XR.Oculus",
-        "Unity.XR.Oculus.Editor",
         "Unity.XR.Management",
         "Unity.XR.Management.Editor",
         "com.unity.xr.oculusperformanceutility",
         "Unity.XR.MockHMD",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.XR.WindowsMixedReality"
     ],
     "includePlatforms": [
         "Editor"
@@ -29,6 +30,11 @@
             "name": "com.unity.xr.mock-hmd",
             "expression": "0.0.1",
             "define": "XR_SDK;MOCKHMD_SDK"
+        },
+        {
+            "name": "com.unity.xr.windowsmr",
+            "expression": "0.0.1",
+            "define": "XR_SDK;WMR_SDK"
         }
     ],
     "noEngineReferences": false
